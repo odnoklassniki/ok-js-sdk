@@ -1,0 +1,42 @@
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>OKSDK - Hello World</title>
+
+    <script type="text/javascript" src="../oksdk.js"></script>
+</head>
+<body>
+
+<div id="backBtn"></div>
+<div id="content"></div>
+
+<script type="text/javascript">
+    document.addEventListener('DOMContentLoaded', function () {
+        var config = {
+            app_id: 0,      // <-- insert APP ID here
+            app_key: ''     // <-- insert APP PUBLIC KEY here
+        };
+
+        OKSDK.init(config, function() {
+
+            OKSDK.Widgets.getBackButtonHtml(function(html) {
+                document.getElementById('backBtn').innerHTML = html;
+            });
+
+            OKSDK.REST.call('users.getCurrentUser', null, function(status, data, error) {
+                if (status == 'ok') {
+                    document.getElementById('content').innerHTML = 'Hello World and hi, ' + data.name + '.';
+                } else {
+                    alert('Unable to retrieve current user ' + OKSDK.Util.toString(error));
+                }
+            });
+
+        }, function(error) {
+            alert('OKSDK error' + OKSDK.Util.toString(error));
+        })
+
+    });
+</script>
+
+</body>
+</html>
