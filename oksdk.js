@@ -2,6 +2,7 @@ OKSDK = (function () {
     const SDK_VERSION = false;
     const OK_CONNECT_URL = 'https://connect.ok.ru/';
     const OK_MOB_URL = 'https://m.ok.ru/';
+    const OK_API_SERVER = 'https://api.ok.ru/';
 
     var state = {
         app_id: 0, app_key: '',
@@ -44,7 +45,7 @@ OKSDK = (function () {
         state.sessionKey = params["session_key"];
         state.accessToken = hParams['access_token'];
         state.sessionSecretKey = params["session_secret_key"] || hParams['session_secret_key'];
-        state.apiServer = params["api_server"] || 'https://api.ok.ru/';
+        state.apiServer = params["api_server"] || OK_API_SERVER;
         state.baseUrl = state.apiServer + "fb.do";
         state.header_widget = params['header_widget'];
         state.container = params['container'];

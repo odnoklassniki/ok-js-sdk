@@ -1,0 +1,55 @@
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>OKSDK - Viral widgets</title>
+
+    <script type="text/javascript" src="../oksdk.js"></script>
+</head>
+<body>
+
+<div id="backBtn"></div>
+<div id="content" style="display: none;">
+    <p>
+        <input type="button" onclick="mediatopicPost();" value="Post a new feed"/><br/>
+        Posts a simple "hello world!" media topic
+    </p>
+
+    <p>
+        <input type="button" onclick="OKSDK.Widgets.invite(location.href);" value="Invite (not-playing) friends to app"/><br/>
+        Selects friends for invitation
+    </p>
+
+    <p>
+        <input type="button" onclick="OKSDK.Widgets.suggest(location.href);" value="Suggest app to friends (both playing and not)"/><br/>
+        Selects friends for suggestion
+    </p>
+</div>
+
+<script type="text/javascript">
+    function mediatopicPost() {
+        OKSDK.Widgets.post(location.href, JSON.stringify({"media": [{"type": "text", "text": "hello world!"}]}));
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        var config = {
+            app_id: 0,      // <-- insert APP ID here
+            app_key: ''     // <-- insert APP PUBLIC KEY here
+        };
+
+        OKSDK.init(config, function() {
+
+            OKSDK.Widgets.getBackButtonHtml(function(html) {
+                document.getElementById('backBtn').innerHTML = html;
+            });
+
+            document.getElementById('content').style.display = '';
+
+        }, function(error) {
+            alert('OKSDK error' + OKSDK.Util.toString(error));
+        })
+
+    });
+</script>
+
+</body>
+</html>
