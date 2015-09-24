@@ -6,7 +6,8 @@ OKSDK = (function () {
 
     var state = {
         app_id: 0, app_key: '',
-        sessionKey: '', accessToken: '', sessionSecretKey: '', apiServer: '', baseUrl: '',
+        sessionKey: '', accessToken: '', sessionSecretKey: '', apiServer: '', widgetServer: '',
+        baseUrl: '',
         container: false, header_widget: '',
         sdkToken: '', sdkTokenSecret: ''
     };
@@ -46,6 +47,7 @@ OKSDK = (function () {
         state.accessToken = hParams['access_token'];
         state.sessionSecretKey = params["session_secret_key"] || hParams['session_secret_key'];
         state.apiServer = params["api_server"] || OK_API_SERVER;
+        state.widgetServer = params['widget_server'] || OK_CONNECT_URL;
         state.baseUrl = state.apiServer + "fb.do";
         state.header_widget = params['header_widget'];
         state.container = params['container'];
@@ -57,7 +59,7 @@ OKSDK = (function () {
 
         if (!params['api_server']) {
             if ((hParams['access_token'] == null) && (hParams['error'] == null)) {
-                window.location = OK_CONNECT_URL + 'oauth/authorize' +
+                window.location = state.widgetServer + 'oauth/authorize' +
                     '?client_id=' + args['app_id'] +
                     '&scope=' + (args.oauth.scope || 'VALUABLE_ACCESS') +
                     '&response_type=' + 'token' +
@@ -271,7 +273,7 @@ OKSDK = (function () {
         }
         sigSource += 'st.return=' + returnUrl + state.sessionSecretKey;
 
-        var query = OK_CONNECT_URL + 'dk?st.cmd=' + widget + '&st.app=' + state.app_id;
+        var query = state.widgetServer + 'dk?st.cmd=' + widget + '&st.app=' + state.app_id;
         if (args.feed != null) {
             query += '&st.attachment=' + encodeURIComponent(args.feed);
         }
