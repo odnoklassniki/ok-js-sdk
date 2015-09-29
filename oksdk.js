@@ -127,6 +127,9 @@ OKSDK = (function () {
      * @param {Object} [params]
      * @param {restCallback} [callback]
      * @param {Object} [callOpts]
+     * @param {boolean} [callOpts.no_session] true if REST method prohibits session
+     * @param {boolean} [callOpts.no_sig] true if no signature is required for the method
+     * @param {string} [callOpts.app_secret_key] required for non-session requests
      * @returns {string}
      */
     function restCall(method, params, callback, callOpts) {
@@ -137,8 +140,10 @@ OKSDK = (function () {
         if (callOpts && callOpts.no_session) {
             delete params['session_key'];
             delete params['access_token'];
-        } else {
-            params['sig'] = calcSignature(params, state.sessionSecretKey);
+        }
+        if (!callOpts || !callOpts.no_sig) {
+            var secret = (callOpts && callOpts.app_secret_key) ? callOpts.app_secret_key : state.sessionSecretKey;
+            params['sig'] = calcSignature(params, secret);
         }
 
         for (var key in params) {
@@ -160,11 +165,18 @@ OKSDK = (function () {
         return callbackId;
     }
 
-    function calcSignatureExternal(query) {
-        return calcSignature(restFillParams(query));
+    /**
+     * Calculates request signature basing on the specified call arguments
+     *
+     * @param {Object} query
+     * @param {string} [secretKey] alternative secret_key (fe: app secret key for non-session requests)
+     * @returns {string}
+     */
+    function calcSignatureExternal(query, secretKey) {
+        return calcSignature(restFillParams(query), secretKey);
     }
 
-    function calcSignature(query) {
+    function calcSignature(query, secretKey) {
         var i, keys = [];
         for (i in query) {
             keys.push(i.toString());
@@ -177,7 +189,7 @@ OKSDK = (function () {
                 sign += keys[i] + '=' + query[keys[i]];
             }
         }
-        sign += state.sessionSecretKey;
+        sign += secretKey || state.sessionSecretKey;
         sign = encodeUtf8(sign);
         return md5(sign);
     }
