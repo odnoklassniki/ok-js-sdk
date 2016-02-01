@@ -268,29 +268,64 @@ OKSDK = (function () {
         widgetOpen('WidgetMediatopicPost', {feed: feed}, returnUrl);
     }
 
-    function widgetInvite(returnUrl) {
-        widgetOpen('WidgetInvite', '', returnUrl);
+    /**
+     * Opens app invite widget (invite friends to app)
+     *
+     * @see widgetSuggest widgetSuggest() for more details on arguments
+     */
+    function widgetInvite(returnUrl, options) {
+        widgetOpen('WidgetInvite', options, returnUrl);
     }
 
-    function widgetSuggest(returnUrl) {
-        widgetOpen('WidgetSuggest', '', returnUrl);
+    /**
+     * Opens app suggest widget (suggest app to friends, both already playing and not yet)
+     *
+     * @param {String} returnUrl callback url
+     * @param {Object} [options] options
+     * @param {int} [options.autosel] amount of friends to be preselected
+     * @param {String} [options.comment] default text set in the suggestion text field
+     * @param {String} [options.custom_args] custom args to be passed when app opened from suggestion
+     * @param {String} [options.state] custom args to be passed to return url
+     * @param {String} [options.target] comma-separated friend IDs that should be preselected by default
+     */
+    function widgetSuggest(returnUrl, options) {
+        widgetOpen('WidgetSuggest', options, returnUrl);
     }
 
     function widgetOpen(widget, args, returnUrl) {
         args = args || {};
 
         var sigSource = '';
-        if (args.feed != null) {
-            sigSource += 'st.attachment=' + args.feed;
-        }
-        sigSource += 'st.return=' + returnUrl + state.sessionSecretKey;
-
         var query = state.widgetServer + 'dk?st.cmd=' + widget + '&st.app=' + state.app_id;
         if (args.feed != null) {
+            sigSource += 'st.attachment=' + args.feed;
             query += '&st.attachment=' + encodeURIComponent(args.feed);
         }
-        query += '&st.signature=' + md5(sigSource);
+        if (args.autosel != null) {
+            sigSource += 'st.autosel=' + args.autosel;
+            query += '&st.autosel=' + args.autosel;
+        }
+        if (args.comment != null) {
+            sigSource += 'st.comment=' + args.comment;
+            query += '&st.comment=' + args.comment;
+        }
+        if (args.custom_args != null) {
+            sigSource += 'st.custom_args=' + args.custom_args;
+            query += '&st.custom_args=' + args.custom_args;
+        }
+        sigSource += 'st.return=' + returnUrl;
         query += '&st.return=' + encodeURIComponent(returnUrl);
+        if (args.state != null) {
+            sigSource += 'st.state=' + args.state;
+            query += '&st.state=' + args.state;
+        }
+        if (args.target != null) {
+            sigSource += 'st.target=' + args.target;
+            query += '&st.target=' + args.target;
+        }
+
+        sigSource += state.sessionSecretKey;
+        query += '&st.signature=' + md5(sigSource);
         if (state.accessToken != null) {
             query += '&st.access_token=' + state.accessToken;
         }
