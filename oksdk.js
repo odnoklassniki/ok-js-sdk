@@ -30,6 +30,7 @@ OKSDK = (function () {
      * @param {String} [args.oauth.scope='VALUABLE_ACCESS'] scope
      * @param {String} [args.oauth.url=location.href] return url
      * @param {String} [args.oauth.state=''] state for security checking
+     * @param {String} [args.oauth.layout='a'] authorization layout (w - web, m - mobile)
      * @param {Function} success success callback
      * @param {Function} failure failure callback
      */
@@ -64,7 +65,7 @@ OKSDK = (function () {
                     '&scope=' + (args.oauth.scope || 'VALUABLE_ACCESS') +
                     '&response_type=' + 'token' +
                     '&redirect_uri=' + (args.oauth.url || window.location.href) +
-                    '&layout=' + 'a' +
+                    '&layout=' + (args.oauth.layout || 'a') +
                     '&state=' + (args.oauth.state || '');
                 return;
             }
