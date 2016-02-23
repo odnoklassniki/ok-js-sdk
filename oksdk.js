@@ -604,6 +604,7 @@ OKSDK = (function () {
             decodeUtf8: decodeUtf8,
             encodeBase64: btoa,
             decodeBase64: atob,
+            getRequestParameters: getRequestParameters,
             toString: toString
         }
     };
