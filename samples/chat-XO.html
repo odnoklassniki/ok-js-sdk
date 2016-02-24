@@ -6,17 +6,18 @@
         html, body, div {
             padding: 0;
             margin: 0;
+            background-color: white;
         }
 
         .field {
-            width: 93vmin;
+            width: 63vmin;
         }
 
         .cell {
-            width: 30vmin;
-            height: 30vmin;
-            line-height: 30vmin;
-            font-size: 20vmin;
+            width: 20vmin;
+            height: 20vmin;
+            line-height: 20vmin;
+            font-size: 15vmin;
             text-align: center;
             display: inline-block;
             border: 1px solid gray;
@@ -38,7 +39,7 @@
             if (!results) {
                 return 0;
             }
-            return results[2] || 0;
+            return decodeURIComponent(results[2]) || 0;
         }
         $(document).ready(function () {
             var config = {
