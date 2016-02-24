@@ -1,0 +1,108 @@
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>OKSDK - Hello World</title>
+    <style>
+        html, body, div {
+            padding: 0;
+            margin: 0;
+        }
+
+        .field {
+            width: 93vmin;
+        }
+
+        .cell {
+            width: 30vmin;
+            height: 30vmin;
+            line-height: 30vmin;
+            font-size: 20vmin;
+            text-align: center;
+            display: inline-block;
+            border: 1px solid gray;
+            overflow: hidden;
+            color: black;
+            #pointer-events: none;
+        }
+
+        .clickable {
+            cursor: pointer;
+            pointer-events: auto;
+        }
+    </style>
+    <script type="text/javascript" src="../oksdk.js"></script>
+    <script type="text/javascript" src="https://code.jquery.com/jquery-2.2.0.min.js"></script>
+    <script type="text/javascript">
+        $.urlParam = function (source, name) {
+            var results = new RegExp('([\\?&]|)' + name + '=([^&#]*)').exec(source);
+            if (!results) {
+                return 0;
+            }
+            return results[2] || 0;
+        }
+        $(document).ready(function () {
+            var config = {
+                app_id: 37888,      // <-- insert APP ID here
+                app_key: 'CBAFJBABABABABABA'     // <-- insert APP PUBLIC KEY here
+            };
+            var args = decodeURIComponent($.urlParam(window.location.href, 'custom_args'));
+            var opponentId = $.urlParam(args, 'opponentId');
+            var state = $.urlParam(args, 'state');
+            var uid = $.urlParam(window.location.href, 'logged_user_id');
+            if (opponentId) {
+                if (!state) {
+                    state = "f=         &m=" + uid+'&s=X';
+                } else {
+                    state = atob(state);
+                }
+                var f = $.urlParam(state, 'f').split('');
+                var m = $.urlParam(state, 'm');
+                var sign = $.urlParam(state, 's');
+                if (m != uid) {
+                    alert('#' + m + " move");
+                    return;
+                }
+                var table = '<div class="field">';
+                for (var i = 0; i < 3; i++) {
+                    for (var j = 0; j < 3; j++) {
+                        var s = f[i * 3 + j];
+                        table += '<div class="cell ' + (s == ' ' ? 'clickable' : '') + '" data-i="' + i + '" data-j="' + j + '">' + s + '</div>';
+                    }
+                }
+                $("#content").append(table);
+                $('.clickable').click(function () {
+                    $(this).text(sign);
+                    var i = Number($(this).attr('data-i'));
+                    var j = Number($(this).attr('data-j'));
+                    f[i * 3 + j] = sign;
+                    var decodedData = 'm=' + opponentId + '&f=' + f.join('')+'&s='+(sign=='X'?'O':'X');
+                    state = btoa(decodedData);
+                    $('.clickable').unbind('click');
+                    OKSDK.init(config, function() {
+                        OKSDK.REST.call('messagesV2.sendAppMessage', {fid:opponentId,text:'Твой ход!!!!',timeout:60000,state:state,platform:'CHAT'}, function(status, data, error) {
+                            if (status == 'ok') {
+                                alert('Close window and wait chat message from your opponent');
+                            } else {
+                                alert('Unable to send message to opponent ' + JSON.stringify(error));
+                            }
+                        });
+
+                    }, function(error) {
+                        alert('OKSDK error' + OKSDK.Util.toString(error));
+                    });
+
+                });
+            } else {
+                alert('No opponentId found');
+            }
+
+        });
+    </script>
+</head>
+<body>
+
+<div id="content"></div>
+
+
+</body>
+</html>
