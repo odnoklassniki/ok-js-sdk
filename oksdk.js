@@ -320,7 +320,7 @@ OKSDK = (function () {
         var query = state.widgetServer + 'dk?st.cmd=' + widget + '&st.app=' + state.app_id;
         for (var i = 0; i < keys.length; i++) {
             var key = "st." + keys[i];
-            var val = args[key];
+            var val = args[keys[i]];
             if (WIDGET_SIGNED_ARGS.indexOf(key) != -1) {
                 sigSource += key + "=" + val;
             }
