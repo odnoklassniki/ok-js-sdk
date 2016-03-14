@@ -249,7 +249,7 @@ OKSDK = (function () {
     // Widgets
     // ---------------------------------------------------------------------------------------------------
 
-    const WIDGET_SIGNED_ARGS = ["attachment", "return", "redirect_uri", "state"];
+    const WIDGET_SIGNED_ARGS = ["st.attachment", "st.return", "st.redirect_uri", "st.state"];
 
     /**
      * Returns HTML to be used as a back button for mobile app<br/>
