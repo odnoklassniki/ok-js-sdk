@@ -326,7 +326,7 @@ OKSDK = (function () {
             }
             query += "&" + key + "=" + encodeURIComponent(val);
         }
-        sigSource += state.sessionKey;
+        sigSource += state.sessionSecretKey;
         query += '&st.signature=' + md5(sigSource);
         if (state.accessToken != null) {
             query += '&st.access_token=' + state.accessToken;
