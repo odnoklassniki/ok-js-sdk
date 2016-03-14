@@ -249,6 +249,8 @@ OKSDK = (function () {
     // Widgets
     // ---------------------------------------------------------------------------------------------------
 
+    const WIDGET_SIGNED_ARGS = ["attachment", "return", "redirect_uri", "state"];
+
     /**
      * Returns HTML to be used as a back button for mobile app<br/>
      * If back button is required (like js app opened in browser from native mobile app) the required html
@@ -265,8 +267,19 @@ OKSDK = (function () {
             }));
     }
 
-    function widgetMediatopicPost(returnUrl, feed) {
-        widgetOpen('WidgetMediatopicPost', {feed: feed}, returnUrl);
+    /**
+     * Opens mediatopic post widget
+     *
+     * @param {String} returnUrl callback url
+     * @param {Object} options options
+     * @param {Object} options.attachment mediatopic (feed) to be posted
+     */
+    function widgetMediatopicPost(returnUrl, options) {
+        options = options || {};
+        if (!options.attachment) {
+            options = {attachment: options}
+        }
+        widgetOpen('WidgetMediatopicPost', options, returnUrl);
     }
 
     /**
@@ -295,37 +308,25 @@ OKSDK = (function () {
 
     function widgetOpen(widget, args, returnUrl) {
         args = args || {};
+        args.return = returnUrl;
+
+        var keys = [];
+        for (var arg in args) {
+            keys.push(arg.toString());
+        }
+        keys.sort();
 
         var sigSource = '';
         var query = state.widgetServer + 'dk?st.cmd=' + widget + '&st.app=' + state.app_id;
-        if (args.feed != null) {
-            sigSource += 'st.attachment=' + args.feed;
-            query += '&st.attachment=' + encodeURIComponent(args.feed);
+        for (var i = 0; i < keys.length; i++) {
+            var key = "st." + keys[i];
+            var val = args[key];
+            if (WIDGET_SIGNED_ARGS.indexOf(key) != -1) {
+                sigSource += key + "=" + val;
+            }
+            query += "&" + key + "=" + encodeURIComponent(val);
         }
-        if (args.autosel != null) {
-            sigSource += 'st.autosel=' + args.autosel;
-            query += '&st.autosel=' + args.autosel;
-        }
-        if (args.comment != null) {
-            sigSource += 'st.comment=' + args.comment;
-            query += '&st.comment=' + args.comment;
-        }
-        if (args.custom_args != null) {
-            sigSource += 'st.custom_args=' + args.custom_args;
-            query += '&st.custom_args=' + args.custom_args;
-        }
-        sigSource += 'st.return=' + returnUrl;
-        query += '&st.return=' + encodeURIComponent(returnUrl);
-        if (args.state != null) {
-            sigSource += 'st.state=' + args.state;
-            query += '&st.state=' + args.state;
-        }
-        if (args.target != null) {
-            sigSource += 'st.target=' + args.target;
-            query += '&st.target=' + args.target;
-        }
-
-        sigSource += state.sessionSecretKey;
+        sigSource += state.sessionKey;
         query += '&st.signature=' + md5(sigSource);
         if (state.accessToken != null) {
             query += '&st.access_token=' + state.accessToken;
