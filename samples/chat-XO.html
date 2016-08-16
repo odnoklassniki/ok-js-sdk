@@ -2,6 +2,12 @@
 <head>
     <meta charset="UTF-8">
     <title>OKSDK - Hello World</title>
+
+    <script type="text/javascript" src="//api.ok.ru/js/fapi5.js" defer="defer"></script>
+    <script type="text/javascript" src="../oksdk.js"></script>
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.11.4/themes/smoothness/jquery-ui.css">
+    <script src="https://code.jquery.com/jquery-1.10.2.js"></script>
+    <script src="https://code.jquery.com/ui/1.11.4/jquery-ui.js"></script>
     <style>
         html, body, div {
             padding: 0;
@@ -11,6 +17,7 @@
 
         .field {
             width: 63vmin;
+            margin: 10vmin auto;
         }
 
         .cell {
@@ -23,17 +30,22 @@
             border: 1px solid gray;
             overflow: hidden;
             color: black;
-            #pointer-events: none;
         }
 
         .clickable {
             cursor: pointer;
             pointer-events: auto;
         }
+
+        .ui-dialog-titlebar {
+            visibility: hidden;
+        }
+
     </style>
-    <script type="text/javascript" src="../oksdk.js"></script>
-    <script type="text/javascript" src="https://code.jquery.com/jquery-2.2.0.min.js"></script>
     <script type="text/javascript">
+function API_callback(method, result, data) {
+	console.log(method,result,data);
+}
         $.urlParam = function (source, name) {
             var results = new RegExp('([\\?&]|)' + name + '=([^&#]*)').exec(source);
             if (!results) {
@@ -41,69 +53,125 @@
             }
             return decodeURIComponent(results[2]) || 0;
         }
+        function modal(text) {
+            $('<div><p>'+text+'</p></div>').dialog({
+                modal: true,
+                closeOnEscape: false,
+                draggable: false,
+
+            });
+        }
+        function isOver(f) {
+            var lines = [[0, 3, 6], [1, 4, 7], [2, 5, 8], [0, 1, 2], [3, 4, 5], [6, 7, 8], [0, 4, 8], [2, 4, 6]];
+            for (var l in lines) {
+                var combo = lines[l];
+                var s = f[combo[0]];
+                if (s != " ") {
+                    var c;
+                    for (c = 1; c < combo.length; c++) {
+                        if (s != f[combo[c]]) {
+                            break;
+                        }
+                    }
+                    if (c == combo.length) {
+                        for (c = 0; c < combo.length; c++) {
+                            $('#cell_' + combo[c]).css('text-decoration', 'line-through');
+                        }
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
         $(document).ready(function () {
             var config = {
                 app_id: 37888,      // <-- insert APP ID here
                 app_key: 'CBAFJBABABABABABA'     // <-- insert APP PUBLIC KEY here
             };
-            var args = decodeURIComponent($.urlParam(window.location.href, 'custom_args'));
+	    var rParams = FAPI.Util.getRequestParameters();
+FAPI.init(rParams["api_server"], rParams["apiconnection"],
+          function() {
+		console.log('FAPI Ready');
+          },
+          function(error) {
+		console.log(error);
+          }
+);
+            var args = $.urlParam(window.location.href, 'custom_args');
             var opponentId = $.urlParam(args, 'opponentId');
             var state = $.urlParam(args, 'state');
+	    var returnUrl = $.urlParam(args,'returnUrl');
             var uid = $.urlParam(window.location.href, 'logged_user_id');
             if (opponentId) {
+		$('#pay').click(function(){FAPI.UI.showPayment("Яблоко", "Это очень вкусно!", 1, 1, null, null, "ok", "true");});
                 if (!state) {
-                    state = "f=         &m=" + uid+'&s=X';
+                    state = "f=         &m=" + uid + '&s=X';
                 } else {
                     state = atob(state);
                 }
                 var f = $.urlParam(state, 'f').split('');
                 var m = $.urlParam(state, 'm');
                 var sign = $.urlParam(state, 's');
-                if (m != uid) {
-                    alert('#' + m + " move");
-                    return;
-                }
                 var table = '<div class="field">';
+                var over = isOver(f);
                 for (var i = 0; i < 3; i++) {
                     for (var j = 0; j < 3; j++) {
-                        var s = f[i * 3 + j];
-                        table += '<div class="cell ' + (s == ' ' ? 'clickable' : '') + '" data-i="' + i + '" data-j="' + j + '">' + s + '</div>';
+                        var idx = i * 3 + j;
+                        var s = f[idx];
+                        table += '<div  id="cell_' + (idx) + '" class="cell ' + (!over && s == ' ' ? 'clickable' : '') + '" data-i="' + i + '" data-j="' + j + '">' + s + '</div>';
                     }
                 }
                 $("#content").append(table);
+                if (m != uid) {
+                    modal('#' + m + " move");
+                    return;
+                }
+                over = isOver(f);
                 $('.clickable').click(function () {
                     $(this).text(sign);
                     var i = Number($(this).attr('data-i'));
                     var j = Number($(this).attr('data-j'));
                     f[i * 3 + j] = sign;
-                    var decodedData = 'm=' + opponentId + '&f=' + f.join('')+'&s='+(sign=='X'?'O':'X');
+                    var decodedData = 'm=' + opponentId + '&f=' + f.join('') + '&s=' + (sign == 'X' ? 'O' : 'X');
                     state = btoa(decodedData);
                     $('.clickable').unbind('click');
-                    OKSDK.init(config, function() {
-                        OKSDK.REST.call('messagesV2.sendAppMessage', {fid:opponentId,text:'Твой ход!!!!',timeout:60000,state:state,platform:'CHAT'}, function(status, data, error) {
+                    var over = isOver(f);
+                    var nomoves = f.join('').indexOf(' ') < 0;
+                    OKSDK.init(config, function () {
+                        OKSDK.REST.call('messagesV2.sendAppMessage', {
+                            fid: opponentId,
+                            text: over ? 'Я победил!!!' : (nomoves ? "Ничья!!!!!!!!" : 'Твой ход!!!!'),
+                            timeout: 60000,
+                            state: state,
+                            platform: 'CHAT'
+                        }, function (status, data, error) {
                             if (status == 'ok') {
-                                alert('Close window and wait chat message from your opponent');
+				if(returnUrl) window.location.href=returnUrl;
+                                if (over) {
+                                    modal('Game over!!!');
+                                } else {
+                                    modal('Close window and wait chat message from your opponent');
+                                }
                             } else {
-                                alert('Unable to send message to opponent ' + JSON.stringify(error));
+                                modal('Unable to send message to opponent ' + JSON.stringify(error));
                             }
                         });
 
-                    }, function(error) {
-                        alert('OKSDK error' + OKSDK.Util.toString(error));
+                    }, function (error) {
+                        modal('OKSDK error' + OKSDK.Util.toString(error));
                     });
 
                 });
             } else {
-                alert('No opponentId found');
+                modal('No opponentId found');
             }
 
         });
     </script>
 </head>
 <body>
-
 <div id="content"></div>
-
+<center><a href="#" id="pay">Pay</a></center>
 
 </body>
 </html>
