@@ -15,7 +15,13 @@ Download and pack your app with **oksdk.js**, try one of the provided samples.
 
 An application registered within OK platform should have:
 
+### Mobile / Web game
+
 1. Target platform checked (like MOBILE_HTML)
-2. EXTERNAL platform checked
-3. Client OAUTH checkbox checked
-4. A VALUABLE_ACCESS permission being checked or requested
+2. A VALUABLE_ACCESS permission being checked or requested
+
+### External / OAUTH game (also applicable for native Android/iOS)
+
+1. EXTERNAL platform checked
+2. Client OAUTH checkbox checked
+3. A VALUABLE_ACCESS permission being checked or requested
