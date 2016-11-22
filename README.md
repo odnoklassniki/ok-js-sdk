@@ -8,6 +8,7 @@ Download and pack your app with **oksdk.js**, try one of the provided samples.
 
 + *helloworld* - Simple Hello World, %user% application skeleton
 + *helloworld-norefresh* - Advanced Hello World, proceedes OAUTH authorization via popup window and sending state back via javascript postmessage, so leading to no redirect on the main page
++ *payment* - Open and process a payment
 + *send-simple* - Sending a simple notification to the current user (via non-session method notifications.sendSimple)
 + *viral* - Viral widgets (post media topic; suggest/invite friends to the app)
 

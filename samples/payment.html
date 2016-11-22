@@ -1,0 +1,80 @@
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>OKSDK - Payment processing</title>
+
+    <script type="text/javascript" src="../oksdk.js"></script>
+</head>
+<body>
+
+<div id="backBtn"></div>
+<div id="content" style="display: none;">
+    <p>
+        <input type="button" onclick="openPayment();" value="Open payment"/><br/>
+    </p>
+</div>
+
+<script type="text/javascript">
+    function openPayment() {
+        // Here we initiate payment by opening a new window selling a product
+        // named "Zombie leg" for 1 OK, with callback id for the item "zombie-leg-1"
+        OKSDK.Payment.show("Zombie Leg", 1, "zombie-leg-1");
+    }
+
+    // Start our processing when the page is loaded
+    document.addEventListener('DOMContentLoaded', function () {
+        var config = {
+            app_id: 0,      // <-- insert APP ID here
+            app_key: ''     // <-- insert APP PUBLIC KEY here
+        };
+
+        OKSDK.init(config, function () {
+            // Authorization / initialization finished correctly
+            // We can start proceeding with OAUTH stuff
+
+            OKSDK.Widgets.getBackButtonHtml(function (html) {
+                document.getElementById('backBtn').innerHTML = html;
+            });
+
+            document.getElementById('content').style.display = '';
+
+        }, function (error) {
+            alert('OKSDK error' + OKSDK.Util.toString(error));
+        });
+
+        let args = OKSDK.Util.getRequestParameters(window.location.search);
+        if (args['custom_args'] && (args['custom_args'].search("payment") == 0)) {
+            // When payment is finished the application is being re-launched with
+            // custom_args containing "payment=ok" or "payment=cancel".
+            //
+            // We detected that the launch is a payment callback, and since we opened a new window
+            // for payment processing, we should send the message to our original game window
+            // and close the current window.
+            //
+            let paymentResult = decodeURIComponent(args['custom_args']).split('=');
+
+            // Post a message {type:"payment",result:"..."}
+            window.opener.postMessage(JSON.stringify({
+                type: 'payment',
+                result: paymentResult
+            }), "*");
+            window.close();
+            return;
+        }
+    });
+
+    // Since we are using separate window when opening a payment, we should send/receive messages
+    // to communicate with the opened window
+    window.addEventListener('message', function (event) {
+        var data = JSON.parse(event.data || "");
+
+        // Receive a message {type:"payment",result:"..."}
+        if (data.type == 'payment') {
+            let paymentResult = data.result;
+            alert('Payment returned result ' + JSON.stringify(paymentResult));
+        }
+    }, false);
+</script>
+
+</body>
+</html>
