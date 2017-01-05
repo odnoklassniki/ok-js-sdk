@@ -1,5 +1,4 @@
 OKSDK = (function () {
-    const SDK_VERSION = false;
     const OK_CONNECT_URL = 'https://connect.ok.ru/';
     const OK_MOB_URL = 'https://m.ok.ru/';
     const OK_API_SERVER = 'https://api.ok.ru/';
@@ -8,8 +7,7 @@ OKSDK = (function () {
         app_id: 0, app_key: '',
         sessionKey: '', accessToken: '', sessionSecretKey: '', apiServer: '', widgetServer: '',
         baseUrl: '',
-        container: false, header_widget: '',
-        sdkToken: '', sdkTokenSecret: ''
+        container: false, header_widget: ''
     };
     var sdk_success = nop;
     var sdk_failure = nop;
@@ -74,28 +72,7 @@ OKSDK = (function () {
                 return;
             }
         }
-        if (SDK_VERSION) {
-            restCall('sdk.init', {
-                    session_data: JSON.stringify({
-                        version: 2,
-                        client_type: 'SDK_JS',
-                        client_version: SDK_VERSION,
-                        device_id: navigator.userAgent
-                    })
-                }, function (status, data, error) {
-                    if (status == 'ok') {
-                        state.sdkToken = data['session_key'];
-                        state.sdkTokenSecret = data['session_secret_key'];
-                        sdk_success();
-                    } else {
-                        sdk_failure("Initialization error: " + toString(error));
-                    }
-                },
-                {no_session: true}
-            );
-        } else {
-            sdk_success();
-        }
+        sdk_success();
     }
 
     // ---------------------------------------------------------------------------------------------------
