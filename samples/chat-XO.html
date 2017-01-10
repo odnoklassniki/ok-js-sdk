@@ -138,7 +138,7 @@ FAPI.init(rParams["api_server"], rParams["apiconnection"],
                     var over = isOver(f);
                     var nomoves = f.join('').indexOf(' ') < 0;
                     OKSDK.init(config, function () {
-                        OKSDK.REST.call('messagesV2.sendAppMessage', {
+                        OKSDK.REST.call('messagesV2.sendGameOver', {
                             fid: opponentId,
                             text: over ? 'Я победил!!!' : (nomoves ? "Ничья!!!!!!!!" : 'Твой ход!!!!'),
                             timeout: 60000,
