@@ -3,52 +3,132 @@
     <meta charset="UTF-8">
     <title>OKSDK - Viral widgets</title>
 
-    <script type="text/javascript" src="../oksdk.js"></script>
+    <script type="text/javascript" src="https://odnoklassniki.github.io/ok-js-sdk/oksdk.js"></script>
 </head>
 <body>
 
 <div id="backBtn"></div>
 <div id="content" style="display: none;">
-    <p>
-        <input type="button" onclick="mediatopicPost();" value="Post a new feed"/><br/>
-        Posts a simple "hello world!" media topic
-    </p>
+    <fieldset>
+        <legend>Posts a simple "hello world!" media topic</legend>
+        <input type="button" onclick="Helper.startSimpleMediaTopic();" value="Post a new feed"/><br/>
+    </fieldset>
 
-    <p>
-        <input type="button" onclick="OKSDK.Widgets.invite(location.href);" value="Invite (not-playing) friends to app"/><br/>
-        Selects friends for invitation
-    </p>
+    <fieldset>
+        <legend>Post mediatopic with a given user-uploaded or application-generated image</legend>
+        <div id="uploadMediatopicStep1">
+            <input type="button" onclick="Helper.startMediaTopicWithUploadedImage();"
+                   value="Start posting mediatopic "/>
+        </div>
+        <div id="uploadMediatopicStep2" style="display: none;">
+            <form id="imgUploadForm" method="POST" enctype="multipart/form-data" action="">
+                <input type="file" id="file1" name="pic1" accept="image/*"/>
+                <input type="submit" value="Create mediatopic with the given image"/>
+            </form>
+        </div>
+    </fieldset>
 
-    <p>
-        <input type="button" onclick="OKSDK.Widgets.suggest(location.href);" value="Suggest app to friends (both playing and not)"/><br/>
-        Selects friends for suggestion
-    </p>
+    <fieldset>
+        <legend>Selects friends for invitation</legend>
+        <input type="button" onclick="OKSDK.Widgets.invite(location.href);"
+               value="Invite (not-playing) friends to app"/><br/>
+    </fieldset>
+
+    <fieldset>
+        <legend>Selects friends for suggestion</legend>
+        <input type="button" onclick="OKSDK.Widgets.suggest(location.href);"
+               value="Suggest app to friends (both playing and not)"/><br/>
+    </fieldset>
 </div>
 
 <script type="text/javascript">
-    function mediatopicPost() {
-        OKSDK.Widgets.post(location.href, JSON.stringify({"media": [{"type": "text", "text": "hello world!"}]}));
-    }
-
     document.addEventListener('DOMContentLoaded', function () {
-        var config = {
-            app_id: 0,      // <-- insert APP ID here
-            app_key: ''     // <-- insert APP PUBLIC KEY here
+        const config = {
+            app_id: 0,      // <-- FIXME: insert APP ID here
+            app_key: '',     // <-- FIXME: insert APP PUBLIC KEY here
+            oauth: {
+                // PHOTO_CONTENT is required for image uploading while posting mediatopic. Not required in other cases
+                scope: 'PHOTO_CONTENT',
+            }
         };
 
-        OKSDK.init(config, function() {
+        OKSDK.init(config, function () {
 
-            OKSDK.Widgets.getBackButtonHtml(function(html) {
+            OKSDK.Widgets.getBackButtonHtml(function (html) {
                 document.getElementById('backBtn').innerHTML = html;
             });
 
             document.getElementById('content').style.display = '';
 
-        }, function(error) {
+        }, function (error) {
             alert('OKSDK error' + OKSDK.Util.toString(error));
         })
 
     });
+
+    class Helper {
+        static startSimpleMediaTopic() {
+            OKSDK.Widgets.post(location.href, JSON.stringify({"media": [{"type": "text", "text": "hello world!"}]}));
+        }
+
+        static startMediaTopicWithUploadedImage() {
+            OKSDK.REST.call("photosV2.getUploadUrl", null, function (status, data, error) {
+                if (status == 'ok' && data['upload_url']) {
+                    const uploadUrl = data['upload_url'];
+                    document.getElementById("uploadMediatopicStep1").style.display = "none";
+                    document.getElementById("uploadMediatopicStep2").style.display = "block";
+
+                    const form = document.getElementById('uploadMediatopicStep2');
+                    const fileSelect = document.getElementById('file1');
+
+                    // use AJAX for form submission instead of redirection
+                    form.onsubmit = function (event) {
+                        event.preventDefault();
+
+                        const inputFiles = fileSelect.files;
+                        const postingFormData = new FormData();
+                        for (let i = 0; i < inputFiles.length; i++) {
+                            let file = inputFiles[i];
+                            postingFormData.append('pic1', file, file.name);
+                        }
+
+                        let request = new XMLHttpRequest();
+                        request.open('POST', uploadUrl, true);
+                        request.onload = function () {
+                            if (request.status == 200) {
+                                // prepare basic mediatopic
+                                let uploadedPhotoTokens = [];
+                                const mediaTopicToPublish = {
+                                    "media": [
+                                        {"type": "text", "text": "Hello World!"},
+                                        {"type": "photo", "list": uploadedPhotoTokens}
+                                    ]
+                                };
+
+                                // extract uploaded photo tokens from uploading response and add them to topic
+                                const uploadResponse = JSON.parse(request.responseText);
+                                const uploadedPhotos = uploadResponse['photos'];
+                                for (let id in uploadedPhotos) {
+                                    if (uploadedPhotos.hasOwnProperty(id)) {
+                                        const token = uploadedPhotos[id]['token'];
+                                        uploadedPhotoTokens.push({'id': token});
+                                    }
+                                }
+
+                                OKSDK.Widgets.post(location.href, JSON.stringify(mediaTopicToPublish));
+
+                            } else {
+                                alert('error with uploading: ' + request.status)
+                            }
+                        };
+                        request.send(postingFormData);
+                    }
+                } else {
+                    alert("Error while requesting upload url: " + JSON.stringify(error));
+                }
+            });
+        }
+    }
 </script>
 
 </body>
