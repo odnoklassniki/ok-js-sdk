@@ -170,6 +170,11 @@ OKMobVideoAdv = function () {
                 if (status === 'ok' && code === 'ready') {
                     state.adm = adm;
                     state.contentId = contentId;
+                } else {
+                    if (state.video) {
+                        state.wrapper.removeChild(state.video);
+                        state.video = null;
+                    }
                 }
                 callback(status, code);
             };
