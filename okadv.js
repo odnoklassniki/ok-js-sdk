@@ -161,6 +161,10 @@ OKMobVideoAdv = function () {
                 showHide([state.unmuteButton], [state.muteButton], false);
                 event.preventDefault();
             };
+            var video = state.wrapper.querySelector("video");
+            if(video) {
+                state.wrapper.removeChild(video);
+            }
             state.video = document.createElement("video");
             state.video.setAttribute('playsinline', 'true');
             state.video.classList.add("widget_video");
