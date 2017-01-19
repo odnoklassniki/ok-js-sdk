@@ -102,7 +102,7 @@ OKMobVideoAdv = function () {
                 wrapper: params.wrapper,
                 videoEl: params.video,
                 params: requestParams,
-                browser: {},
+                browser: {}
             });
         }, function (err) {
             console.warn('Ad error', err);
@@ -120,6 +120,7 @@ OKMobVideoAdv = function () {
             overlay: null,
             loading: null,
             wrapper: null,
+            container: null,
             skipBlock: null,
             countdownText: null,
             skipButton: null,
@@ -140,6 +141,7 @@ OKMobVideoAdv = function () {
             state.overlay = overlay;
             state.loading = document.querySelector('.widget-spinner');
             state.wrapper = document.querySelector('.widget_video-wrapper');
+            state.container = document.querySelector('.widget_video-container');
             state.skipBlock = state.wrapper.querySelector('.widget_skip');
             state.countdownText = state.wrapper.querySelector('.widget_skip-text');
             state.skipButton = state.wrapper.querySelector('.widget_skip-link');
@@ -161,14 +163,14 @@ OKMobVideoAdv = function () {
                 showHide([state.unmuteButton], [state.muteButton], false);
                 event.preventDefault();
             };
-            var video = state.wrapper.querySelector("video");
+            var video = state.container.querySelector("video");
             if(video) {
-                state.wrapper.removeChild(video);
+                state.container.removeChild(video);
             }
             state.video = document.createElement("video");
             state.video.setAttribute('playsinline', 'true');
             state.video.classList.add("widget_video");
-            state.wrapper.insertBefore(state.video, state.wrapper.firstChild);
+            state.container.insertBefore(state.video, state.container.firstChild);
 
             state.callback = function (adm, status, code) {
                 if (status === 'ok' && code === 'ready') {
@@ -176,7 +178,7 @@ OKMobVideoAdv = function () {
                     state.contentId = contentId;
                 } else {
                     if (state.video) {
-                        state.wrapper.removeChild(state.video);
+                        state.container.removeChild(state.video);
                         state.video = null;
                     }
                 }
@@ -200,7 +202,7 @@ OKMobVideoAdv = function () {
                 state.callback = function (adm, status, code) {
                     showHide(elems, [], false);
                     if (state.video) {
-                        state.wrapper.removeChild(state.video);
+                        state.container.removeChild(state.video);
                         state.video = null;
                     }
                     state.adm = null;
@@ -211,7 +213,8 @@ OKMobVideoAdv = function () {
                 callback('error', 'empty')
             }
         }
-    }
+    };
+
     return {
         prepareMidroll: function (appId, userId, callback, preview) {
             ui.prepare('mb' + appId, userId, preview, callback);

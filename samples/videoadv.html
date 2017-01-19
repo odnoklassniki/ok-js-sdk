@@ -3,17 +3,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width" />
     <title>OKSDK - Video Adv</title>
-    <style type="text/css">
+    <style>
         .widget-invisible {
             display: none;
-        }
+            }
 
         .widget-overlay {
             position: fixed;
             top: 0; right: 0; bottom: 0; left: 0;
             z-index: 1000; /* to overlap all */
             background: rgba(0,0,0,.5)
-        }
+            }
 
         .widget-spinner {
             position: absolute;
@@ -26,7 +26,7 @@
 
             -webkit-transform: translate(-50%, -50%) scale(0.6);
             transform: translate(-50%, -50%) scale(0.6);
-        }
+            }
 
         .widget-spinner_i {
             position: absolute;
@@ -43,74 +43,83 @@
             -webkit-animation-duration: 1.2s;
             animation-iteration-count: infinite;
             -webkit-animation-iteration-count: infinite;
-        }
+            }
 
         .widget-spinner_i.__1 {
             left: 0;
             top: 51px;
             animation-delay: .45s;
             -webkit-animation-delay: .45s;
-        }
-
+            }
 
         .widget-spinner_i.__2 {
             left: 15px;
             top: 15px;
             animation-delay: .6s;
             -webkit-animation-delay: .6s;
-        }
+            }
 
         .widget-spinner_i.__3 {
             left: 51px;
             top: 0;
             animation-delay: .75s;
             -webkit-animation-delay: .75s;
-        }
+            }
 
         .widget-spinner_i.__4 {
             right: 15px;
             top: 15px;
             animation-delay: .9s;
             -webkit-animation-delay: .9s;
-        }
+            }
 
         .widget-spinner_i.__5 {
             right: 0;
             top: 51px;
             animation-delay: 1.05s;
             -webkit-animation-delay: 1.05s;
-        }
+            }
 
         .widget-spinner_i.__6 {
             right: 15px;
             bottom: 15px;
             animation-delay: 1.2s;
             -webkit-animation-delay: 1.2s;
-        }
+            }
 
         .widget-spinner_i.__7 {
             left: 51px;
             bottom: 0;
             animation-delay: 1.35s;
             -webkit-animation-delay: 1.35s;
-        }
+            }
 
         .widget-spinner_i.__8 {
             left: 15px;
             bottom: 15px;
             animation-delay: 1.5s;
             -webkit-animation-delay: 1.5s;
-        }
+            }
 
         .widget_video-wrapper {
             position: absolute;
             top: 50%;
-            left: 50%;
+            left: 0;
+            width: 100%;
             z-index: 1010; /* to overlap .widget-spinner  */
 
-            -webkit-transform: translate(-50%, -50%);
-            transform: translate(-50%, -50%);
-        }
+            text-align: center;
+
+            -webkit-transform: translateY(-50%);
+            transform: translateY(-50%);
+            }
+
+        .widget_video-container {
+            position: relative;
+            display: inline-block;
+            vertical-align: middle ;
+            text-align: left;
+            }
 
         .widget_label,
         .widget_skip,
@@ -118,42 +127,42 @@
             position: absolute;
             color: #fff;
             text-shadow: 0 0 1px #333;
-        }
+            }
 
         .widget_label {
             left: 5%;
             bottom: 5%;
-        }
+            }
 
         .widget_skip {
             bottom: 5%;
             right: 5%;
-        }
+            }
 
         .widget_skip-link {
             color: #fff;
             text-decoration: none;
-        }
+            }
 
         .widget_mute {
             top: 5%;
             right: 5%;
-        }
+            }
 
         .widget_mute-link {
             color: #fff;
             text-decoration: none;
-        }
+            }
 
         @keyframes spinnerFade {
             0% { background-color:rgb(255,255,255); }
-            100% { background-color:rgb(255,255,255, .3); }
-        }
+            100% { background-color:rgb(255,255,255,.3); }
+            }
 
         @-webkit-keyframes spinnerFade {
             0% { background-color:rgb(255,255,255); }
-            100% { background-color:rgb(255,255,255, .3); }
-        }
+            100% { background-color:rgb(255,255,255,.3); }
+            }
 
     </style>
     <script type="text/javascript" src="../okadv.js"></script>
@@ -174,8 +183,8 @@
 <button onclick="OKMobVideoAdv.showMidroll(123456,123456,function(status,code){alert(status+' '+code)});">Test Show midroll</button>
 
 
-<div class="widget-overlay widget-invisible">
-</div>
+<div class="widget-overlay widget-invisible"></div>
+
 <div class="widget-spinner widget-invisible">
     <div class="widget-spinner_i __1"></div>
     <div class="widget-spinner_i __2"></div>
@@ -186,18 +195,20 @@
     <div class="widget-spinner_i __7"></div>
     <div class="widget-spinner_i __8"></div>
 </div>
+
 <div class="widget_video-wrapper widget-invisible">
-
-    <div class="widget_label">Adv</div>
-
-    <div class="widget_skip">
-        <div class="widget_skip-text widget-invisible">You can skip ad in 0 sec</div>
-        <a href="#" class="widget_skip-link widget-invisible">Skip ad</a>
-    </div>
-    <div class="widget_mute">
-        <a href="#" class="widget_mute-link js-mute">Mute</a>
-        <a href="#" class="widget_mute-link js-unmute widget-invisible">Unmute</a>
+    <div class="widget_video-container">
+        <div class="widget_label">Adv</div>
+        <div class="widget_skip">
+            <div class="widget_skip-text widget-invisible">You can skip ad in 0 sec</div>
+            <a href="#" class="widget_skip-link widget-invisible">Skip ad</a>
+        </div>
+        <div class="widget_mute">
+            <a href="#" class="widget_mute-link js-mute">Mute</a>
+            <a href="#" class="widget_mute-link js-unmute widget-invisible">Unmute</a>
+        </div>
     </div>
 </div>
+
 </body>
 </html>
