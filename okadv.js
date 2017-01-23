@@ -39,7 +39,7 @@ OKMobVideoAdv = function () {
             var requestParams = {
                 content_id: params.contentId,
                 ok_id: params.userId,
-                skip_ad: params.contentId.charAt(0) === 'm' ? 0 : 1,
+                skip_ad: params.contentId.charAt(1) === 'm' ? 0 : 1,
                 flash: 0
             };
             if (params.preview) {
@@ -217,15 +217,15 @@ OKMobVideoAdv = function () {
 
     return {
         prepareMidroll: function (appId, userId, callback, preview) {
-            ui.prepare('mb' + appId, userId, preview, callback);
+            ui.prepare('mm' + appId, userId, preview, callback);
         },
         showMidroll: function (appId, userId, callback) {
-            ui.show('mb' + appId, userId, callback);
+            ui.show('mm' + appId, userId, callback);
         },
         showPreroll: function (appId, userId, callback, preview) {
             ui.prepare('pb' + appId, userId, preview, function (status, code) {
                 if (status === 'ok' && code === 'ready') {
-                    ui.show('pb' + appId, userId, callback)
+                    ui.show('mp' + appId, userId, callback)
                 } else {
                     callback(status, code);
                 }
