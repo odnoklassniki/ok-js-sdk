@@ -223,9 +223,9 @@ OKMobVideoAdv = function () {
             ui.show('mm' + appId, userId, callback);
         },
         showPreroll: function (appId, userId, callback, preview) {
-            ui.prepare('pb' + appId, userId, preview, function (status, code) {
+            ui.prepare('pm' + appId, userId, preview, function (status, code) {
                 if (status === 'ok' && code === 'ready') {
-                    ui.show('mp' + appId, userId, callback)
+                    ui.show('pm' + appId, userId, callback)
                 } else {
                     callback(status, code);
                 }
