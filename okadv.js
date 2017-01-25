@@ -1,5 +1,7 @@
 OKMobVideoAdv = function () {
     "use strict";
+    var MIDROLL_OFFSET = 40000000000000, PREROLL_OFFSET = 30000000000000;
+
     function getAdman(success, fail) {
         if (window['AdmanHTML']) {
             success(new AdmanHTML());
@@ -39,7 +41,7 @@ OKMobVideoAdv = function () {
             var requestParams = {
                 content_id: params.contentId,
                 ok_id: params.userId,
-                skip_ad: params.contentId.charAt(1) === 'm' ? 0 : 1,
+                skip_ad: params.skipAd,
                 flash: 0
             };
             if (params.preview) {
@@ -128,7 +130,7 @@ OKMobVideoAdv = function () {
             muteButton: null,
             unmuteButton: null,
         },
-        prepare: function (contentId, userId, preview, callback) {
+        prepare: function (contentId, userId, preview, skipAd, callback) {
             var overlay = document.querySelector('.widget-overlay');
             if (!overlay.classList.contains('widget-invisible')) {
                 callback('error', 'in_use');
@@ -138,6 +140,7 @@ OKMobVideoAdv = function () {
             state.contentId = contentId;
             state.userId = userId;
             state.preview = preview;
+            state.skipAd = skipAd;
             state.overlay = overlay;
             state.loading = document.querySelector('.widget-spinner');
             state.wrapper = document.querySelector('.widget_video-wrapper');
@@ -164,7 +167,7 @@ OKMobVideoAdv = function () {
                 event.preventDefault();
             };
             var video = state.container.querySelector("video");
-            if(video) {
+            if (video) {
                 state.container.removeChild(video);
             }
             state.video = document.createElement("video");
@@ -217,15 +220,15 @@ OKMobVideoAdv = function () {
 
     return {
         prepareMidroll: function (appId, userId, callback, preview) {
-            ui.prepare('mm' + appId, userId, preview, callback);
+            ui.prepare(MIDROLL_OFFSET + appId, userId, preview, 0, callback);
         },
         showMidroll: function (appId, userId, callback) {
-            ui.show('mm' + appId, userId, callback);
+            ui.show(MIDROLL_OFFSET + appId, userId, callback);
         },
         showPreroll: function (appId, userId, callback, preview) {
-            ui.prepare('pm' + appId, userId, preview, function (status, code) {
+            ui.prepare(PREROLL_OFFSET + appId, userId, preview, 1, function (status, code) {
                 if (status === 'ok' && code === 'ready') {
-                    ui.show('pm' + appId, userId, callback)
+                    ui.show(PREROLL_OFFSET + appId, userId, callback)
                 } else {
                     callback(status, code);
                 }
