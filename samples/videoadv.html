@@ -1,19 +1,22 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width" />
+    <meta name="viewport" content="width=device-width"/>
     <title>OKSDK - Video Adv</title>
     <style>
         .widget-invisible {
             display: none;
-            }
+        }
 
         .widget-overlay {
             position: fixed;
-            top: 0; right: 0; bottom: 0; left: 0;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: 0;
             z-index: 1000; /* to overlap all */
-            background: rgba(0,0,0,.5)
-            }
+            background: rgba(0, 0, 0, .5)
+        }
 
         .widget-spinner {
             position: absolute;
@@ -26,7 +29,7 @@
 
             -webkit-transform: translate(-50%, -50%) scale(0.6);
             transform: translate(-50%, -50%) scale(0.6);
-            }
+        }
 
         .widget-spinner_i {
             position: absolute;
@@ -35,7 +38,7 @@
             width: 22px;
 
             border-radius: 12px;
-            background-color: rgb(255,255,255, .3);
+            background-color: rgb(255, 255, 255, .3);
 
             animation-name: spinnerFade;
             -webkit-animation-name: spinnerFade;
@@ -43,63 +46,63 @@
             -webkit-animation-duration: 1.2s;
             animation-iteration-count: infinite;
             -webkit-animation-iteration-count: infinite;
-            }
+        }
 
         .widget-spinner_i.__1 {
             left: 0;
             top: 51px;
             animation-delay: .45s;
             -webkit-animation-delay: .45s;
-            }
+        }
 
         .widget-spinner_i.__2 {
             left: 15px;
             top: 15px;
             animation-delay: .6s;
             -webkit-animation-delay: .6s;
-            }
+        }
 
         .widget-spinner_i.__3 {
             left: 51px;
             top: 0;
             animation-delay: .75s;
             -webkit-animation-delay: .75s;
-            }
+        }
 
         .widget-spinner_i.__4 {
             right: 15px;
             top: 15px;
             animation-delay: .9s;
             -webkit-animation-delay: .9s;
-            }
+        }
 
         .widget-spinner_i.__5 {
             right: 0;
             top: 51px;
             animation-delay: 1.05s;
             -webkit-animation-delay: 1.05s;
-            }
+        }
 
         .widget-spinner_i.__6 {
             right: 15px;
             bottom: 15px;
             animation-delay: 1.2s;
             -webkit-animation-delay: 1.2s;
-            }
+        }
 
         .widget-spinner_i.__7 {
             left: 51px;
             bottom: 0;
             animation-delay: 1.35s;
             -webkit-animation-delay: 1.35s;
-            }
+        }
 
         .widget-spinner_i.__8 {
             left: 15px;
             bottom: 15px;
             animation-delay: 1.5s;
             -webkit-animation-delay: 1.5s;
-            }
+        }
 
         .widget_video-wrapper {
             position: absolute;
@@ -112,14 +115,14 @@
 
             -webkit-transform: translateY(-50%);
             transform: translateY(-50%);
-            }
+        }
 
         .widget_video-container {
             position: relative;
             display: inline-block;
-            vertical-align: middle ;
+            vertical-align: middle;
             text-align: left;
-            }
+        }
 
         .widget_label,
         .widget_skip,
@@ -127,60 +130,90 @@
             position: absolute;
             color: #fff;
             text-shadow: 0 0 1px #333;
-            }
+        }
 
         .widget_label {
             left: 5%;
             bottom: 5%;
-            }
+        }
 
         .widget_skip {
             bottom: 5%;
             right: 5%;
-            }
+        }
 
         .widget_skip-link {
             color: #fff;
             text-decoration: none;
-            }
+        }
 
         .widget_mute {
             top: 5%;
             right: 5%;
-            }
+        }
 
         .widget_mute-link {
             color: #fff;
             text-decoration: none;
-            }
+        }
 
         @keyframes spinnerFade {
-            0% { background-color:rgb(255,255,255); }
-            100% { background-color:rgb(255,255,255,.3); }
+            0% {
+                background-color: rgb(255, 255, 255);
             }
+            100% {
+                background-color: rgb(255, 255, 255, .3);
+            }
+        }
 
         @-webkit-keyframes spinnerFade {
-            0% { background-color:rgb(255,255,255); }
-            100% { background-color:rgb(255,255,255,.3); }
+            0% {
+                background-color: rgb(255, 255, 255);
             }
+            100% {
+                background-color: rgb(255, 255, 255, .3);
+            }
+        }
 
     </style>
     <script type="text/javascript" src="../okadv.js"></script>
+    <script type="text/javascript">
+        function get(id) {
+            var v = document.getElementById(id).value;
+            return v && v.length > 0 ? Number(v) : 0;
+        }
+    </script>
 </head>
 <body>
+<div>
+    AppId: <input value="" id="appId"/> UserId: <input value="" id="uid"/>
+</div>
 
-<button onclick="OKMobVideoAdv.showPreroll(123456,123456,function(status,code){alert(status+' '+code)});">Play preroll</button>
 
-<button onclick="OKMobVideoAdv.prepareMidroll(123456,123456,function(status,code){alert(status+' '+code)});">Prepare midroll</button>
+<button onclick="OKMobVideoAdv.showPreroll(get('appId'),get('uid'),function(status,code){alert(status+' '+code)});">Play
+    preroll
+</button>
 
-<button onclick="OKMobVideoAdv.showMidroll(123456,123456,function(status,code){alert(status+' '+code)});">Show midroll</button>
+<button onclick="OKMobVideoAdv.prepareMidroll(get('appId'),get('uid'),function(status,code){alert(status+' '+code)});">
+    Prepare midroll
+</button>
+
+<button onclick="OKMobVideoAdv.showMidroll(get('appId'),get('uid'),function(status,code){alert(status+' '+code)});">Show
+    midroll
+</button>
 
 <br/>
-<button onclick="OKMobVideoAdv.showPreroll(123456,123456,function(status,code){alert(status+' '+code)},1);">Test preroll</button>
+<button onclick="OKMobVideoAdv.showPreroll(get('appId'),get('uid'),function(status,code){alert(status+' '+code)},1);">
+    Test preroll
+</button>
 
-<button onclick="OKMobVideoAdv.prepareMidroll(123456,123456,function(status,code){alert(status+' '+code)},1);">Test midroll</button>
+<button onclick="OKMobVideoAdv.prepareMidroll(get('appId'),get('uid'),function(status,code){alert(status+' '+code)},1);">
+    Test midroll
+</button>
 
-<button onclick="OKMobVideoAdv.showMidroll(123456,123456,function(status,code){alert(status+' '+code)});">Test Show midroll</button>
+<button onclick="OKMobVideoAdv.showMidroll(get('appId'),get('uid'),function(status,code){alert(status+' '+code)});">Test
+    Show midroll
+</button>
 
 
 <div class="widget-overlay widget-invisible"></div>
