@@ -256,6 +256,7 @@ OKSDK = (function () {
         if (!options.attachment) {
             options = {attachment: options}
         }
+        options.attachment = btoa(unescape(encodeURIComponent(toString(options.attachment))));
         widgetOpen('WidgetMediatopicPost', options, returnUrl);
     }
 
