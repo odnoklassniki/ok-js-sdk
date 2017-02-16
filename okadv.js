@@ -42,7 +42,8 @@ OKMobVideoAdv = function () {
                 content_id: params.contentId,
                 ok_id: params.userId,
                 skip_ad: params.skipAd,
-                flash: 0
+                flash: 0,
+		mobile: 1
             };
             if (params.preview) {
                 requestParams.preview = params.preview;
