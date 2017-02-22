@@ -3,245 +3,90 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width"/>
     <title>OKSDK - Video Adv</title>
-    <style>
-        .widget-invisible {
-            display: none;
-        }
-
-        .widget-overlay {
-            position: fixed;
-            top: 0;
-            right: 0;
-            bottom: 0;
-            left: 0;
-            z-index: 1000; /* to overlap all */
-            background: rgba(0, 0, 0, .5)
-        }
-
-        .widget-spinner {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            z-index: 1005; /* to overlap .widget-overlay */
-
-            width: 125px;
-            height: 125px;
-
-            -webkit-transform: translate(-50%, -50%) scale(0.6);
-            transform: translate(-50%, -50%) scale(0.6);
-        }
-
-        .widget-spinner_i {
-            position: absolute;
-
-            height: 22px;
-            width: 22px;
-
-            border-radius: 12px;
-            background-color: rgb(255, 255, 255, .3);
-
-            animation-name: spinnerFade;
-            -webkit-animation-name: spinnerFade;
-            animation-duration: 1.2s;
-            -webkit-animation-duration: 1.2s;
-            animation-iteration-count: infinite;
-            -webkit-animation-iteration-count: infinite;
-        }
-
-        .widget-spinner_i.__1 {
-            left: 0;
-            top: 51px;
-            animation-delay: .45s;
-            -webkit-animation-delay: .45s;
-        }
-
-        .widget-spinner_i.__2 {
-            left: 15px;
-            top: 15px;
-            animation-delay: .6s;
-            -webkit-animation-delay: .6s;
-        }
-
-        .widget-spinner_i.__3 {
-            left: 51px;
-            top: 0;
-            animation-delay: .75s;
-            -webkit-animation-delay: .75s;
-        }
-
-        .widget-spinner_i.__4 {
-            right: 15px;
-            top: 15px;
-            animation-delay: .9s;
-            -webkit-animation-delay: .9s;
-        }
-
-        .widget-spinner_i.__5 {
-            right: 0;
-            top: 51px;
-            animation-delay: 1.05s;
-            -webkit-animation-delay: 1.05s;
-        }
-
-        .widget-spinner_i.__6 {
-            right: 15px;
-            bottom: 15px;
-            animation-delay: 1.2s;
-            -webkit-animation-delay: 1.2s;
-        }
-
-        .widget-spinner_i.__7 {
-            left: 51px;
-            bottom: 0;
-            animation-delay: 1.35s;
-            -webkit-animation-delay: 1.35s;
-        }
-
-        .widget-spinner_i.__8 {
-            left: 15px;
-            bottom: 15px;
-            animation-delay: 1.5s;
-            -webkit-animation-delay: 1.5s;
-        }
-
-        .widget_video-wrapper {
-            position: absolute;
-            top: 50%;
-            left: 0;
-            width: 100%;
-            z-index: 1010; /* to overlap .widget-spinner  */
-
-            text-align: center;
-
-            -webkit-transform: translateY(-50%);
-            transform: translateY(-50%);
-        }
-
-        .widget_video-container {
-            position: relative;
-            display: inline-block;
-            vertical-align: middle;
-            text-align: left;
-        }
-
-        .widget_label,
-        .widget_skip,
-        .widget_mute {
-            position: absolute;
-            color: #fff;
-            text-shadow: 0 0 1px #333;
-        }
-
-        .widget_label {
-            left: 5%;
-            bottom: 5%;
-        }
-
-        .widget_skip {
-            bottom: 5%;
-            right: 5%;
-        }
-
-        .widget_skip-link {
-            color: #fff;
-            text-decoration: none;
-        }
-
-        .widget_mute {
-            top: 5%;
-            right: 5%;
-        }
-
-        .widget_mute-link {
-            color: #fff;
-            text-decoration: none;
-        }
-
-        @keyframes spinnerFade {
-            0% {
-                background-color: rgb(255, 255, 255);
-            }
-            100% {
-                background-color: rgb(255, 255, 255, .3);
-            }
-        }
-
-        @-webkit-keyframes spinnerFade {
-            0% {
-                background-color: rgb(255, 255, 255);
-            }
-            100% {
-                background-color: rgb(255, 255, 255, .3);
-            }
-        }
-
-    </style>
-    <script type="text/javascript" src="../okadv.js"></script>
-    <script type="text/javascript">
-        function get(id) {
-            var v = document.getElementById(id).value;
-            return v && v.length > 0 ? Number(v) : 0;
-        }
-    </script>
 </head>
+<style>
+    iframe {
+        border: 0;
+        position: fixed;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 1000; /* to overlap all */
+    }
+</style>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.9-1/crypto-js.min.js"></script>
+<script type="text/javascript">
+    function _(id, value) {
+        if (value) {
+            document.getElementById(id).value = value;
+        }
+        return document.getElementById(id).value;
+    }
+    window.addEventListener('message', function (e) {
+        console.log(e.data);
+        var o = JSON.parse(e.data);
+        if (o.call.method === "init" && o.result.status === "ok") {
+            console.log('initialized');
+        }
+        if (o.call.method.indexOf("show") == 0) {
+            var style = document.getElementsByTagName('iframe')[0].style;
+            style.display = 'none';
+        }
+    });
+    function prepare(content) {
+        window.frames[0].postMessage(JSON.stringify({method: 'prepare', arguments: [content]}), '*');
+    }
+
+    function show() {
+        window.frames[0].postMessage(JSON.stringify({method: 'show'}), '*');
+        var style = document.getElementsByTagName('iframe')[0].style;
+        style.display = '';
+    }
+
+    function injectFrame() {
+        var frame = document.createElement('iframe');
+        var sig = CryptoJS.MD5("call_id=1" + _('sessionSecretKey')).toString();
+        frame.src = _('connect') + "/dk?st.cmd=WidgetVideoAdv&st.app=" + _('appId') + "&st.sig=" + sig + "&st.call_id=1&st.session_key=" + _('sessionKey');
+        frame.style.display = 'none';
+        document.body.appendChild(frame);
+    }
+</script>
 <body>
-<div>
-    AppId: <input value="" id="appId"/> UserId: <input value="" id="uid"/>
-</div>
-
-
-<button onclick="OKMobVideoAdv.showPreroll(get('appId'),get('uid'),function(status,code){alert(status+' '+code)});">Play
-    preroll
-</button>
-
-<button onclick="OKMobVideoAdv.prepareMidroll(get('appId'),get('uid'),function(status,code){alert(status+' '+code)});">
-    Prepare midroll
-</button>
-
-<button onclick="OKMobVideoAdv.showMidroll(get('appId'),get('uid'),function(status,code){alert(status+' '+code)});">Show
-    midroll
-</button>
-
+<h1>Hello world!!!</h1>
+Application Id: <input type="text" id="appId" value=""> <br/>
+Connect: <input type="text" id="connect" value=""> <br/>
+Session Key: <input type="text" id="sessionKey" value="">
 <br/>
-<button onclick="OKMobVideoAdv.showPreroll(get('appId'),get('uid'),function(status,code){alert(status+' '+code)},1);">
-    Test preroll
-</button>
+Session Secret Key: <input type="text" id="sessionSecretKey" value=""> <br/>
+<input type="submit" value="inject frame" onclick="injectFrame()"><br/>
+<input type="submit" value="prepare midroll" onclick="prepare('midroll')">
+<input type="submit" value="prepare preroll" onclick="prepare('preroll')">
+<input type="submit" value="show" onclick="show()">
+<br/>
 
-<button onclick="OKMobVideoAdv.prepareMidroll(get('appId'),get('uid'),function(status,code){alert(status+' '+code)},1);">
-    Test midroll
-</button>
+<script>
+    var res = {};
+    var url = window.location.search;
+    if (url) {
+        url = url.substr(1);    // Drop the leading '?' / '#'
+        var nameValues = url.split("&");
 
-<button onclick="OKMobVideoAdv.showMidroll(get('appId'),get('uid'),function(status,code){alert(status+' '+code)});">Test
-    Show midroll
-</button>
-
-
-<div class="widget-overlay widget-invisible"></div>
-
-<div class="widget-spinner widget-invisible">
-    <div class="widget-spinner_i __1"></div>
-    <div class="widget-spinner_i __2"></div>
-    <div class="widget-spinner_i __3"></div>
-    <div class="widget-spinner_i __4"></div>
-    <div class="widget-spinner_i __5"></div>
-    <div class="widget-spinner_i __6"></div>
-    <div class="widget-spinner_i __7"></div>
-    <div class="widget-spinner_i __8"></div>
-</div>
-
-<div class="widget_video-wrapper widget-invisible">
-    <div class="widget_video-container">
-        <div class="widget_label">Adv</div>
-        <div class="widget_skip">
-            <div class="widget_skip-text widget-invisible">You can skip ad in 0 sec</div>
-            <a href="#" class="widget_skip-link widget-invisible">Skip ad</a>
-        </div>
-        <div class="widget_mute">
-            <a href="#" class="widget_mute-link js-mute">Mute</a>
-            <a href="#" class="widget_mute-link js-unmute widget-invisible">Unmute</a>
-        </div>
-    </div>
-</div>
-
+        for (var i = 0; i < nameValues.length; i++) {
+            var nameValue = nameValues[i].split("=");
+            var name = nameValue[0];
+            var value = nameValue[1];
+            value = decodeURIComponent(value.replace(/\+/g, " "));
+            res[name] = value;
+        }
+    }
+    _('sessionKey',res['session_key']);
+    _('sessionSecretKey',res['session_secret_key']);
+    _('appId',res['app_id']);
+    _('connect',res['connect']);
+    console.log(res);
+</script>
 </body>
 </html>
