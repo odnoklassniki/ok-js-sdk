@@ -1,4 +1,5 @@
-OKSDK = (function () {
+"use strict";
+var OKSDK = (function () {
     const OK_CONNECT_URL = 'https://connect.ok.ru/';
     const OK_MOB_URL = 'https://m.ok.ru/';
     const OK_API_SERVER = 'https://api.ok.ru/';
@@ -346,7 +347,7 @@ OKSDK = (function () {
             for (let i = 0; i < nblk * 16; i++) {
                 blks[i] = 0;
             }
-            for (i = 0; i < str.length; i++) {
+            for (let i = 0; i < str.length; i++) {
                 blks[i >> 2] |= str.charCodeAt(i) << ((i % 4) * 8);
             }
             blks[i >> 2] |= 0x80 << ((i % 4) * 8);
