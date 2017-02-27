@@ -344,10 +344,11 @@ var OKSDK = (function () {
         function str2blks_MD5(str) {
             let nblk = ((str.length + 8) >> 6) + 1;
             let blks = new Array(nblk * 16);
-            for (let i = 0; i < nblk * 16; i++) {
+            let i = 0;
+            for (i = 0; i < nblk * 16; i++) {
                 blks[i] = 0;
             }
-            for (let i = 0; i < str.length; i++) {
+            for (i = 0; i < str.length; i++) {
                 blks[i >> 2] |= str.charCodeAt(i) << ((i % 4) * 8);
             }
             blks[i >> 2] |= 0x80 << ((i % 4) * 8);
