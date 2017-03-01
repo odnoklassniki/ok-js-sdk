@@ -199,11 +199,14 @@ var OKSDK = (function () {
     // Payment
     // ---------------------------------------------------------------------------------------------------
 
-    function paymentShow(productName, productPrice, productCode) {
+    function paymentShow(productName, productPrice, productCode, options) {
         var params = {};
         params['name'] = productName;
         params['price'] = productPrice;
         params['code'] = productCode;
+
+        options = options || {};
+        const host = options['mob_pay_url'] || OK_MOB_URL;
 
         params["application_key"] = state.app_key;
         if (state.sessionKey) {
@@ -213,7 +216,7 @@ var OKSDK = (function () {
         }
         params['sig'] = calcSignature(params, state.sessionSecretKey);
 
-        var query = OK_MOB_URL + 'api/show_payment?';
+        var query = host + 'api/show_payment?';
         for (var key in params) {
             if (params.hasOwnProperty(key)) {
                 query += key + "=" + encodeURIComponent(params[key]) + "&";
