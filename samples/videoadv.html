@@ -35,6 +35,7 @@
             var style = document.getElementsByTagName('iframe')[0].style;
             style.display = 'none';
         }
+        alert(e.data);
     });
     function prepare(content) {
         window.frames[0].postMessage(JSON.stringify({method: 'prepare', arguments: [content]}), '*');
