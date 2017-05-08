@@ -3,12 +3,22 @@ var OKSDK = (function () {
     const OK_CONNECT_URL = 'https://connect.ok.ru/';
     const OK_MOB_URL = 'https://m.ok.ru/';
     const OK_API_SERVER = 'https://api.ok.ru/';
+    const
+        MOBILE = 'mobile',
+        WEB = 'web',
+        UNKNOWN = 'unknown';
 
+    const PLATFORM_REGISTER = {
+        'w': WEB,
+        'm': MOBILE,
+        'unknown': UNKNOWN
+    };
     var state = {
         app_id: 0, app_key: '',
         sessionKey: '', accessToken: '', sessionSecretKey: '', apiServer: '', widgetServer: '',
         baseUrl: '',
-        container: false, header_widget: ''
+        container: false,
+        header_widget: ''
     };
     var sdk_success = nop;
     var sdk_failure = nop;
@@ -43,24 +53,32 @@ var OKSDK = (function () {
 
         state.app_id = args.app_id;
         state.app_key = params["application_key"] || args.app_key;
-        state.sessionKey = params["session_key"];
-        state.accessToken = hParams['access_token'];
-        state.sessionSecretKey = params["session_secret_key"] || hParams['session_secret_key'];
-        state.apiServer = args["api_server"] || params["api_server"] || OK_API_SERVER;
-        state.widgetServer = args["widget_server"] || params['widget_server'] || OK_CONNECT_URL;
-        state.baseUrl = state.apiServer + "fb.do";
-        state.header_widget = params['header_widget'];
-        state.container = params['container'];
 
         if (!state.app_id || !state.app_key) {
             sdk_failure('Required arguments app_id/app_key not passed');
             return;
         }
 
+        state.sessionKey = params["session_key"];
+        state.accessToken = hParams['access_token'];
+        state.groupId = params['group_id'] || hParams['group_id'];
+        state.sessionSecretKey = params["session_secret_key"] || hParams['session_secret_key'];
+        state.apiServer = args["api_server"] || params["api_server"] || OK_API_SERVER;
+        state.widgetServer = args["widget_server"] || params['widget_server'] || OK_CONNECT_URL;
+        state.baseUrl = state.apiServer + "fb.do";
+        state.header_widget = params['header_widget'];
+        state.container = params['container'];
+        state.layout = (params['layout'] || hParams['layout'])
+            || (params['api_server']
+                ? (params['apiconnection']
+                    ? 'w'
+                    : 'm')
+                : args.layout || UNKNOWN);
+
         if (!params['api_server']) {
             if ((hParams['access_token'] == null) && (hParams['error'] == null)) {
                 window.location = state.widgetServer + 'oauth/authorize' +
-                    '?client_id=' + args['app_id'] +
+                    '?client_id=' + args.app_id +
                     '&scope=' + (args.oauth.scope || 'VALUABLE_ACCESS') +
                     '&response_type=' + 'token' +
                     '&redirect_uri=' + (args.oauth.url || window.location.href) +
@@ -73,6 +91,8 @@ var OKSDK = (function () {
                 return;
             }
         }
+
+
         sdk_success();
     }
 
@@ -290,8 +310,56 @@ var OKSDK = (function () {
 
     function widgetOpen(widget, args, returnUrl) {
         args = args || {};
-        args.return = returnUrl;
+        args.return = args.return || returnUrl;
+        var popupConfig = args.popupConfig;
+        var popup;
 
+        if (popupConfig) {
+            console.log('popupConfig', popupConfig);
+            var w = popupConfig.width;
+            var h = popupConfig.height;
+            var documentElement = document.documentElement;
+            if (typeof popupConfig.left == 'undefined') {
+                var screenLeft = window.screenLeft;
+                var innerWidth = window.innerWidth;
+                var screenOffsetLeft = typeof screenLeft == 'undefined' ? screen.left : screenLeft;
+                var screenWidth = innerWidth ? innerWidth : documentElement.clientWidth ? documentElement.clientWidth : screen.width;
+                var left = (screenWidth / 2 - w / 2) + screenOffsetLeft;
+            }
+            if (typeof popupConfig.top == 'undefined') {
+                var screenTop = window.screenTop;
+                var screenOffsetTop = typeof screenTop == 'undefined'? screen.top : screenTop;
+                var innerHeight = window.innerHeight;
+                var screenHeight = innerHeight ? innerHeight : documentElement.clientHeight ? documentElement.clientHeight : screen.height;
+                var top = (screenHeight / 2 - h / 2) + screenOffsetTop ;
+            }
+
+            var popupName = popupConfig.name + Date.now();
+            /* DEBUG */ window._sdk_popup =
+                popup = window.open(
+                    getLinkOnWidget(widget, args),
+                    popupName,
+                    'width='+ w +',' +
+                    'height='+ h +',' +
+                    'top='+ top +',' +
+                    'left='+ left +
+                    (popupConfig.options ? (','+ popupConfig.options) : '')
+                );
+
+            //callbackRegistry[popupName] = function (data) {
+            //    //console.log('callback',arguments);
+            //    handle()
+            //    delete callbackRegistry[popupName];
+            //}
+
+        } else {
+            popup = window.open(getLinkOnWidget(widget, args));
+        }
+
+        return popup;
+    }
+
+    function getLinkOnWidget(widget, args) {
         var keys = [];
         for (var arg in args) {
             keys.push(arg.toString());
@@ -299,7 +367,12 @@ var OKSDK = (function () {
         keys.sort();
 
         var sigSource = '';
-        var query = state.widgetServer + 'dk?st.cmd=' + widget + '&st.app=' + state.app_id;
+        var query = state.widgetServer +
+            'dk?st.cmd=' + widget +
+            '&st.app=' + state.app_id;
+
+        state.groupId && (query += '&st.groupId=' + state.groupId);
+
         for (var i = 0; i < keys.length; i++) {
             var key = "st." + keys[i];
             var val = args[keys[i]];
@@ -316,8 +389,183 @@ var OKSDK = (function () {
         if (state.sessionKey) {
             query += '&st.session_key=' + state.sessionKey;
         }
-        window.open(query);
+        return query;
     }
+
+    function trueSupplier() {
+        return true;
+    }
+
+    // ---------------------------------------------------------------------------------------------------
+    // SDK constructor
+    // ---------------------------------------------------------------------------------------------------
+
+    /**
+     *
+     * @param widget
+     * @param options
+     * @constructor
+     */
+    function MethodConstructor(widget, options) {
+        this.widget = widget;
+        this.options = options;
+        this.handlerData = this.handlersMap[widget] || widgetOpen;
+        this.adapters = {
+            restAdapter: this.handlerData.adapters.restAdapter || null,
+            widgetAdapter: this.handlerData.adapters.widgetAdapter || null,
+            uiAdapter: this.handlerData.adapters.uiAdapter || null
+        };
+        this.resolveContext();
+    }
+
+    MethodConstructor.prototype = {
+        performRedirect: function (redirectUrl, redirectCondition) {
+            this.redirectUrl = redirectUrl ? redirectUrl : this.options.redirectUrl;
+            this.redirectCondition = isFunc(redirectCondition) ? redirectCondition : trueSupplier;
+        },
+        callContext: {
+            platform: "unknown", // [mob, web]
+            isOAuth: null,
+            isOKApp: null,
+            isWindow: null,
+            isIframe: null,
+            isSelfHosted: null
+        },
+        adapterType: {
+            UI: 'uiAdapter',
+            REST: 'restAdapter',
+            WIDGET: 'widgetAdapter',
+        },
+        handlersMap: {
+            /**
+             * {Object} widgetName
+             * {String} widgetName.uiHandler
+             * {String} widgetName.restHandler
+             */
+            'WidgetGroupAppPermissions': {},
+            'WidgetMediatopicPost': {
+                UIMethodName: 'postMediatopic',
+                RESTMethodName: null,
+                adapters: {
+                    uiAdapter: function(handlerData, methodParams) {
+                        return [handlerData.UIMethodName, methodParams.attachment];
+                    }
+                }
+            },
+            'WidgetInvite': { widgetHandler: widgetInvite, UIMethodName: null, RESTMethodName: null },
+            'WidgetSuggest': { widgetHandler: widgetSuggest, UIMethodName: null, RESTMethodName: null }
+        },
+        applyAdapter: function (type) {
+            var adapter = this.adapters[type];
+            if (adapter) {
+                this.options = adapter(this.handlerData, this.options);
+            }
+        },
+        open: function () {
+            this.applyAdapter(this.adapterType.WIDGET);
+            widgetOpen(this.widget, this.options);
+        },
+        invokeUI: function () {
+            this.applyAdapter(this.adapterType.UI);
+            _invokeUIMethod.apply(null, this.options);
+        },
+        //createIframe: function () {},
+        //callRest: function () {},
+        resolveContext: resolveContext,
+        run: function () {
+            var callContext = /* DEBUG */ window.sdk_context = this.callContext;
+            var isMob = callContext.platform === MOBILE;
+
+            if (this.redirectCondition(state)) {
+                window.location.href = this.redirectUrl;
+            }
+
+            if (callContext.isSelfHosted) {
+                if (isMob) {console.log('::HOSTED::MOB!');
+                    /* Внешня веб-страница, запускаем попап */
+                    this.open();
+                    // OR createIframe(getLinkOnWidget(this.widget, this.options));
+                } else {console.log('::HOSTED::WEB!');
+                    /* Внешня веб-страница, запускаем попап */
+                    this.open();
+                    // OR createIframe(getLinkOnWidget(this.widget, this.options));
+                }
+            } else if (isMob) {console.log('::MOB!');
+                /* Открыто в ОК, в мобе. UI-методы на данный момент на мобильной версии
+                не поддерживаются, поэтому открывает попап. */
+                this.open();
+                //OR createIframe(getLinkOnWidget(this.widget, this.options));
+            } else {console.log('::WEB!');
+                /* Открыто в ОК, в вебе. Тут есть UI-методы, если таковой реализован,
+                запускаем, если нет, – открывает попап. */
+                if (this.handlerData.UIMethodName) {
+                    this.invokeUI();
+                } else {
+                    this.open();
+                }
+            }
+        }
+    };
+
+    /* todo: виджеты в леере
+    function createIframe(uri, customCssClass) {
+        var iframe = document.createElement('iframe');
+        var iframeClassName = typeof customCssClass === 'undefined' ? "" : customCssClass;
+        iframe.src = uri;
+        iframe.className = ("ok-sdk-frame " + iframeClassName);
+
+        document.body.appendChild(iframe);
+
+        //iframe.contentWindow.postMessage({'test-message': 7}, "*")
+    }
+    */
+
+    // TODO: возможно пригодиться, использование:
+    // OKSDK.invokeUIMethod('showPermissions', '[\'VALUABLE ACCESS\', \'SET STATUS\']')
+    function _invokeUIMethod() {
+        // cannot be called within parent, as function is directly attached to FAPI
+        var argStr = "";
+        for (var i = 0, l = arguments.length; i < l; i++) {
+            var arg = arguments[i];
+
+            if (i > 0) {
+                argStr += '$';
+            }
+            if (arg != null) {
+                argStr += encodeURIComponent(String(arg));
+            }
+        }
+        window.parent.postMessage("__FAPI__" + argStr, "*");
+    }
+
+    /**
+     * @class MethodConstructor
+     *
+     * @returns {Object} context
+     * @returns {Boolean} context.platform
+     * @returns {Boolean} context.isOKApp
+     * @returns {Boolean} context.isOauth
+     * @returns {Boolean} context.isIframe
+     * @returns {Boolean} context.isSelfHosted
+     */
+    function resolveContext() {
+        var context = {};
+        var stateMode = state.layout.toLowerCase();
+
+        // make via pipeline
+        context.platform = PLATFORM_REGISTER[stateMode] || 'unknown';
+        context.isOKApp = state.container || false;
+        context.isOAuth = stateMode === 'o';
+        context.isIframe = window.parent !== window;
+        context.isWindow = !!window.opener;
+        context.isSelfHosted = !(context.isIframe || context.isWindow || context.isOAuth);
+
+        if (this.callContext) {
+            this.callContext = context;
+        }
+    }
+
+
 
     // ---------------------------------------------------------------------------------------------------
     // Utils
@@ -517,7 +765,7 @@ var OKSDK = (function () {
                 var nameValue = nameValues[i].split("=");
                 var name = nameValue[0];
                 var value = nameValue[1];
-                value = decodeURIComponent(value.replace(/\+/g, " "));
+                value = value && decodeURIComponent(value.replace(/\+/g, " "));
                 res[name] = value;
             }
         }
@@ -543,7 +791,6 @@ var OKSDK = (function () {
         }
         return res;
     }
-
     function decodeUtf8(utftext) {
         var string = "";
         var i = 0;
@@ -567,25 +814,14 @@ var OKSDK = (function () {
         }
         return string;
     }
-
     /** stub func */
     function nop() {}
-
-    /**
-     * @callback onSuccessCallback
-     * @param {String} result
-     */
-
-    /**
-     * @callback restCallback
-     * @param {String} code (either 'ok' or 'error')
-     * @param {Object} data success data
-     * @param {Object} error error data
-     */
 
     // ---------------------------------------------------------------------------------------------------
     return {
         init: init,
+        invokeUIMethod: _invokeUIMethod,
+        MethodConstructor: MethodConstructor,
         REST: {
             call: restCall,
             calcSignature: calcSignatureExternal
