@@ -371,7 +371,9 @@ var OKSDK = (function () {
             'dk?st.cmd=' + widget +
             '&st.app=' + state.app_id;
 
-        state.groupId && (query += '&st.groupId=' + state.groupId);
+        if (state.groupId) {
+            query += '&st.groupId=' + state.groupId;
+        }
 
         for (var i = 0; i < keys.length; i++) {
             var key = "st." + keys[i];
@@ -392,10 +394,6 @@ var OKSDK = (function () {
         return query;
     }
 
-    function trueSupplier() {
-        return true;
-    }
-
     // ---------------------------------------------------------------------------------------------------
     // SDK constructor
     // ---------------------------------------------------------------------------------------------------
@@ -410,18 +408,25 @@ var OKSDK = (function () {
         this.widget = widget;
         this.options = options;
         this.handlerData = this.handlersMap[widget] || widgetOpen;
-        this.adapters = {
-            restAdapter: this.handlerData.adapters.restAdapter || null,
-            widgetAdapter: this.handlerData.adapters.widgetAdapter || null,
-            uiAdapter: this.handlerData.adapters.uiAdapter || null
-        };
+
+        var adapters = this.handlerData.adapters;
+        if (adapters) {
+            this.adapters = {
+                restAdapter: adapters.restAdapter,
+                widgetAdapter: adapters.widgetAdapter,
+                uiAdapter: adapters.uiAdapter
+            };
+        } else {
+            this.adapters = {};
+        }
+
         this.resolveContext();
     }
 
     MethodConstructor.prototype = {
         performRedirect: function (redirectUrl, redirectCondition) {
             this.redirectUrl = redirectUrl ? redirectUrl : this.options.redirectUrl;
-            this.redirectCondition = isFunc(redirectCondition) ? redirectCondition : trueSupplier;
+            this.redirectCondition = isFunc(redirectCondition) ? redirectCondition : trueCondition;
         },
         callContext: {
             platform: "unknown", // [mob, web]
@@ -475,8 +480,9 @@ var OKSDK = (function () {
         run: function () {
             var callContext = /* DEBUG */ window.sdk_context = this.callContext;
             var isMob = callContext.platform === MOBILE;
+            var redirectCondition = this.redirectCondition;
 
-            if (this.redirectCondition(state)) {
+            if (redirectCondition && redirectCondition(state)) {
                 window.location.href = this.redirectUrl;
             }
 
@@ -505,6 +511,10 @@ var OKSDK = (function () {
                 }
             }
         }
+    };
+
+    var trueCondition = function () {
+        return true;
     };
 
     /* todo: виджеты в леере
