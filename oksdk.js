@@ -3,16 +3,13 @@ var OKSDK = (function () {
     const OK_CONNECT_URL = 'https://connect.ok.ru/';
     const OK_MOB_URL = 'https://m.ok.ru/';
     const OK_API_SERVER = 'https://api.ok.ru/';
-    const
-        MOBILE = 'mobile',
-        WEB = 'web',
-        UNKNOWN = 'unknown';
-
-    const PLATFORM_REGISTER = {
+    const WEB = 'web', MOBILE = 'mob', APPLICATION = 'app';
+    const LAYOUT_REGISTER = {
         'w': WEB,
         'm': MOBILE,
-        'unknown': UNKNOWN
+        'a': APPLICATION
     };
+
     var state = {
         app_id: 0, app_key: '',
         sessionKey: '', accessToken: '', sessionSecretKey: '', apiServer: '', widgetServer: '',
@@ -73,7 +70,7 @@ var OKSDK = (function () {
                 ? (params['apiconnection']
                     ? 'w'
                     : 'm')
-                : args.layout || UNKNOWN);
+                : args.layout || null);
 
         if (!params['api_server']) {
             if ((hParams['access_token'] == null) && (hParams['error'] == null)) {
@@ -429,8 +426,7 @@ var OKSDK = (function () {
             this.redirectCondition = isFunc(redirectCondition) ? redirectCondition : trueCondition;
         },
         callContext: {
-            platform: "unknown", // [mob, web]
-            isOAuth: null,
+            layoutMode: null,
             isOKApp: null,
             isWindow: null,
             isIframe: null,
@@ -479,7 +475,7 @@ var OKSDK = (function () {
         resolveContext: resolveContext,
         run: function () {
             var callContext = /* DEBUG */ window.sdk_context = this.callContext;
-            var isMob = callContext.platform === MOBILE;
+            var isMob = callContext.layoutMode === MOBILE;
             var redirectCondition = this.redirectCondition;
 
             if (redirectCondition && redirectCondition(state)) {
@@ -560,15 +556,13 @@ var OKSDK = (function () {
      */
     function resolveContext() {
         var context = {};
-        var stateMode = state.layout.toLowerCase();
+        var layoutMode = state.layout.toLowerCase();
 
-        // make via pipeline
-        context.platform = PLATFORM_REGISTER[stateMode] || 'unknown';
+        context.layoutMode = LAYOUT_REGISTER[layoutMode]; /* @Nullable */
         context.isOKApp = state.container || false;
-        context.isOAuth = stateMode === 'o';
         context.isIframe = window.parent !== window;
         context.isWindow = !!window.opener;
-        context.isSelfHosted = !(context.isIframe || context.isWindow || context.isOAuth);
+        context.isSelfHosted = !(context.isIframe || context.isWindow || context.layoutMode);
 
         if (this.callContext) {
             this.callContext = context;
