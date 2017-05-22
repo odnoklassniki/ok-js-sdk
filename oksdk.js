@@ -3,13 +3,16 @@ var OKSDK = (function () {
     const OK_CONNECT_URL = 'https://connect.ok.ru/';
     const OK_MOB_URL = 'https://m.ok.ru/';
     const OK_API_SERVER = 'https://api.ok.ru/';
-    const WEB = 'web', MOBILE = 'mob', APPLICATION = 'app';
-    const LAYOUT_REGISTER = {
+
+    const MOBILE = 'mobile';
+    const WEB = 'web';
+    const NATIVE_APP = 'application';
+
+    const PLATFORM_REGISTER = {
         'w': WEB,
         'm': MOBILE,
-        'a': APPLICATION
+        'a': NATIVE_APP
     };
-
     var state = {
         app_id: 0, app_key: '',
         sessionKey: '', accessToken: '', sessionSecretKey: '', apiServer: '', widgetServer: '',
@@ -58,7 +61,7 @@ var OKSDK = (function () {
 
         state.sessionKey = params["session_key"];
         state.accessToken = hParams['access_token'];
-        state.groupId = params['group_id'] || hParams['group_id'];
+        state.groupId = params['group_id'] || hParams['group_id'] || args['group_id'];
         state.sessionSecretKey = params["session_secret_key"] || hParams['session_secret_key'];
         state.apiServer = args["api_server"] || params["api_server"] || OK_API_SERVER;
         state.widgetServer = args["widget_server"] || params['widget_server'] || OK_CONNECT_URL;
@@ -70,7 +73,7 @@ var OKSDK = (function () {
                 ? (params['apiconnection']
                     ? 'w'
                     : 'm')
-                : args.layout || null);
+                : args.layout);
 
         if (!params['api_server']) {
             if ((hParams['access_token'] == null) && (hParams['error'] == null)) {
@@ -343,12 +346,6 @@ var OKSDK = (function () {
                     (popupConfig.options ? (','+ popupConfig.options) : '')
                 );
 
-            //callbackRegistry[popupName] = function (data) {
-            //    //console.log('callback',arguments);
-            //    handle()
-            //    delete callbackRegistry[popupName];
-            //}
-
         } else {
             popup = window.open(getLinkOnWidget(widget, args));
         }
@@ -401,7 +398,7 @@ var OKSDK = (function () {
      * @param options
      * @constructor
      */
-    function MethodConstructor(widget, options) {
+    function WidgetConstructor(widget, options) {
         this.widget = widget;
         this.options = options;
         this.handlerData = this.handlersMap[widget] || widgetOpen;
@@ -420,13 +417,14 @@ var OKSDK = (function () {
         this.resolveContext();
     }
 
-    MethodConstructor.prototype = {
+    WidgetConstructor.prototype = {
         performRedirect: function (redirectUrl, redirectCondition) {
             this.redirectUrl = redirectUrl ? redirectUrl : this.options.redirectUrl;
             this.redirectCondition = isFunc(redirectCondition) ? redirectCondition : trueCondition;
         },
         callContext: {
-            layoutMode: null,
+            layout: undefined,
+            isOAuth: null,
             isOKApp: null,
             isWindow: null,
             isIframe: null,
@@ -434,27 +432,24 @@ var OKSDK = (function () {
         },
         adapterType: {
             UI: 'uiAdapter',
-            REST: 'restAdapter',
             WIDGET: 'widgetAdapter',
         },
         handlersMap: {
             /**
              * {Object} widgetName
              * {String} widgetName.uiHandler
-             * {String} widgetName.restHandler
              */
             'WidgetGroupAppPermissions': {},
             'WidgetMediatopicPost': {
                 UIMethodName: 'postMediatopic',
-                RESTMethodName: null,
                 adapters: {
                     uiAdapter: function(handlerData, methodParams) {
                         return [handlerData.UIMethodName, methodParams.attachment];
                     }
                 }
             },
-            'WidgetInvite': { widgetHandler: widgetInvite, UIMethodName: null, RESTMethodName: null },
-            'WidgetSuggest': { widgetHandler: widgetSuggest, UIMethodName: null, RESTMethodName: null }
+            'WidgetInvite': { widgetHandler: widgetInvite, UIMethodName: null },
+            'WidgetSuggest': { widgetHandler: widgetSuggest, UIMethodName: null }
         },
         applyAdapter: function (type) {
             var adapter = this.adapters[type];
@@ -462,40 +457,45 @@ var OKSDK = (function () {
                 this.options = adapter(this.handlerData, this.options);
             }
         },
-        open: function () {
+        open: function open() {
+            console.log(this.name)
             this.applyAdapter(this.adapterType.WIDGET);
-            widgetOpen(this.widget, this.options);
+            var popup = widgetOpen(this.widget, this.options);
+            //if (!popup && asLayer) {
+            //    this.createIframeLayer();
+            //}
+            return popup;
         },
         invokeUI: function () {
             this.applyAdapter(this.adapterType.UI);
-            _invokeUIMethod.apply(null, this.options);
+            invokeUIMethod.apply(null, this.options);
         },
-        //createIframe: function () {},
-        //callRest: function () {},
+        openLayer: function () {},
         resolveContext: resolveContext,
         run: function () {
             var callContext = /* DEBUG */ window.sdk_context = this.callContext;
-            var isMob = callContext.layoutMode === MOBILE;
-            var redirectCondition = this.redirectCondition;
+            var isMob = callContext.layout === MOBILE;
+            var redirectCondition;
+            var popup;
 
-            if (redirectCondition && redirectCondition(state)) {
+            if ((redirectCondition = this.redirectCondition) && redirectCondition(state)) {
                 window.location.href = this.redirectUrl;
             }
 
             if (callContext.isSelfHosted) {
                 if (isMob) {console.log('::HOSTED::MOB!');
                     /* Внешня веб-страница, запускаем попап */
-                    this.open();
+                    popup = this.open();
                     // OR createIframe(getLinkOnWidget(this.widget, this.options));
                 } else {console.log('::HOSTED::WEB!');
                     /* Внешня веб-страница, запускаем попап */
-                    this.open();
+                    popup = this.open();
                     // OR createIframe(getLinkOnWidget(this.widget, this.options));
                 }
             } else if (isMob) {console.log('::MOB!');
                 /* Открыто в ОК, в мобе. UI-методы на данный момент на мобильной версии
                 не поддерживаются, поэтому открывает попап. */
-                this.open();
+                popup = this.open();
                 //OR createIframe(getLinkOnWidget(this.widget, this.options));
             } else {console.log('::WEB!');
                 /* Открыто в ОК, в вебе. Тут есть UI-методы, если таковой реализован,
@@ -503,9 +503,11 @@ var OKSDK = (function () {
                 if (this.handlerData.UIMethodName) {
                     this.invokeUI();
                 } else {
-                    this.open();
+                    popup = this.open();
                 }
             }
+
+            return popup;
         }
     };
 
@@ -526,10 +528,7 @@ var OKSDK = (function () {
     }
     */
 
-    // TODO: возможно пригодиться, использование:
-    // OKSDK.invokeUIMethod('showPermissions', '[\'VALUABLE ACCESS\', \'SET STATUS\']')
-    function _invokeUIMethod() {
-        // cannot be called within parent, as function is directly attached to FAPI
+    function invokeUIMethod() {
         var argStr = "";
         for (var i = 0, l = arguments.length; i < l; i++) {
             var arg = arguments[i];
@@ -545,7 +544,7 @@ var OKSDK = (function () {
     }
 
     /**
-     * @class MethodConstructor
+     * @class WidgetConstructor
      *
      * @returns {Object} context
      * @returns {Boolean} context.platform
@@ -556,13 +555,15 @@ var OKSDK = (function () {
      */
     function resolveContext() {
         var context = {};
-        var layoutMode = state.layout.toLowerCase();
+        var stateMode = state.layout && state.layout.toLowerCase();
 
-        context.layoutMode = LAYOUT_REGISTER[layoutMode]; /* @Nullable */
+        // todo: pipeline
+        context.layout = PLATFORM_REGISTER[stateMode];
         context.isOKApp = state.container || false;
+        context.isOAuth = stateMode === 'o';
         context.isIframe = window.parent !== window;
         context.isWindow = !!window.opener;
-        context.isSelfHosted = !(context.isIframe || context.isWindow || context.layoutMode);
+        context.isSelfHosted = !(context.isIframe || context.isWindow || context.isOAuth);
 
         if (this.callContext) {
             this.callContext = context;
@@ -824,8 +825,6 @@ var OKSDK = (function () {
     // ---------------------------------------------------------------------------------------------------
     return {
         init: init,
-        invokeUIMethod: _invokeUIMethod,
-        MethodConstructor: MethodConstructor,
         REST: {
             call: restCall,
             calcSignature: calcSignatureExternal
@@ -834,6 +833,7 @@ var OKSDK = (function () {
             show: paymentShow
         },
         Widgets: {
+            Builder: WidgetConstructor,
             getBackButtonHtml: widgetBackButton,
             post: widgetMediatopicPost,
             invite: widgetInvite,
