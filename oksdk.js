@@ -7,11 +7,13 @@ var OKSDK = (function () {
     const MOBILE = 'mobile';
     const WEB = 'web';
     const NATIVE_APP = 'application';
+    const EXTERNAL = 'external';
 
     const PLATFORM_REGISTER = {
         'w': WEB,
         'm': MOBILE,
-        'a': NATIVE_APP
+        'a': NATIVE_APP,
+        'e': EXTERNAL
     };
     var state = {
         app_id: 0, app_key: '',
@@ -315,7 +317,6 @@ var OKSDK = (function () {
         var popup;
 
         if (popupConfig) {
-            console.log('popupConfig', popupConfig);
             var w = popupConfig.width;
             var h = popupConfig.height;
             var documentElement = document.documentElement;
@@ -452,7 +453,7 @@ var OKSDK = (function () {
             layout: undefined,
             isOAuth: null,
             isOKApp: null,
-            isWindow: null,
+            isPopup: null,
             isIframe: null,
             isExternal: null
         },
@@ -514,15 +515,17 @@ var OKSDK = (function () {
         changeParams: function (options) {
             if (this.options) {
                 mergeObject(this.options, options, true);
+                return this;
             } else {
-                this.configure(options);
+                return this.configure(options);
             }
         },
         addParams: function (options) {
             if (this.options) {
                 mergeObject(this.options, options, false);
+                return this;
             } else {
-                this.configure(options);
+                return this.configure(options);
             }
         },
         configure: function (options) {
@@ -537,6 +540,9 @@ var OKSDK = (function () {
             return this.validateAndRun();
         }
     };
+
+
+
 
     function uiLayerCheck() {
         var context = this.callContext;
@@ -600,9 +606,9 @@ var OKSDK = (function () {
             isOKApp: state.container || false,
             isOAuth: stateMode === 'o',
             isIframe: window.parent !== window,
-            isWindow: !!window.opener
+            isPopup: !!window.opener
         };
-        context.isExternal = !(context.isIframe || context.isWindow || context.isOAuth);
+        context.isExternal = context.layout == EXTERNAL || !(context.isIframe || context.isPopup || context.isOAuth);
         context.isMob = context.layout == WEB || context.layout == NATIVE_APP;
         this.callContext = context;
     }
