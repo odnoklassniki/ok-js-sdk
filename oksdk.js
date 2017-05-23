@@ -6,7 +6,7 @@ var OKSDK = (function () {
 
     var state = {
         app_id: 0, app_key: '',
-        sessionKey: '', accessToken: '', sessionSecretKey: '', apiServer: '', widgetServer: '',
+        sessionKey: '', accessToken: '', sessionSecretKey: '', apiServer: '', widgetServer: '', mobServer: '',
         baseUrl: '',
         container: false, header_widget: ''
     };
@@ -48,6 +48,7 @@ var OKSDK = (function () {
         state.sessionSecretKey = params["session_secret_key"] || hParams['session_secret_key'];
         state.apiServer = args["api_server"] || params["api_server"] || OK_API_SERVER;
         state.widgetServer = args["widget_server"] || params['widget_server'] || OK_CONNECT_URL;
+        state.mobServer = args["mob_server"] || params["mob_server"] || OK_MOB_URL;
         state.baseUrl = state.apiServer + "fb.do";
         state.header_widget = params['header_widget'];
         state.container = params['container'];
@@ -235,7 +236,7 @@ var OKSDK = (function () {
         params['code'] = productCode;
 
         options = options || {};
-        const host = options['mob_pay_url'] || OK_MOB_URL;
+        const host = options['mob_pay_url'] || state.mobServer;
 
         params["application_key"] = state.app_key;
         if (state.sessionKey) {
