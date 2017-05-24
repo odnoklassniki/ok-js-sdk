@@ -392,6 +392,7 @@ var OKSDK = (function () {
     // SDK constructor
     // ---------------------------------------------------------------------------------------------------
 
+
     function WidgetConfigurator(widgetName) {
         this.name = widgetName;
         this.adapters = {};
@@ -399,56 +400,56 @@ var OKSDK = (function () {
     }
 
     WidgetConfigurator.prototype = {
+        /* one of FAPI.UI methods, more: https://apiok.ru/search?q=FAPI.UI */
         withUiLayerName: function(name) {
             this.uiLayerName = name;
             return this;
         },
+        withValidators: function (validators) {
+            this.validators = validators;
+            return this;
+        },
+        withAdapters: function (adapters) {
+            this.adapters = adapters;
+            return this;
+        },
         withUiAdapter: function(fn) {
-            this.adapters.uiAdapter = fn;
+            this.adapters.openUiLayer = fn;
             return this;
         },
         withPopupAdapter: function(fn) {
-            this.adapters.popupAdapter = fn;
+            this.adapters.openPopup = fn;
             return this;
         },
         withIframeAdapter: function(fn) {
-            this.adapters.iframeAdapter = fn;
+            this.adapters.openIframeLayer = fn;
             return this;
         }
     };
 
     function WidgetLayerBuilder(widget, options) {
-        if (widget instanceof WidgetConfigurator && widget.name && !this.handlerConfMap[widget.name]) {
-            WidgetLayerBuilder.prototype.handlerConfMap[widget.name] = widget;
-            this.handlerConf = widget;
-            this.widgetName = widget.name;
-        } else {
-            this.handlerConf = this.handlerConfMap[widget] || {};
-            this.widgetName = widget;
+        if (widget instanceof WidgetConfigurator === false) {
+            widget = new WidgetConfigurator(widget);
         }
 
-        this.options = options;
+        this.widgetName = widget.name;
+        this.handlerConf = widget;
+        this.options = options || {};
 
-        if (this.handlerConf) {
-            var adapters = this.handlerConf.adapters;
-            if (adapters) {
-                this.adapters = {
-                    openPopup: adapters.popupAdapter,
-                    openUiLayer: adapters.uiAdapter,
-                    openIframeLayer: adapters.iframeAdapter
-                };
-            } else {
-                this.adapters = {};
-            }
-            this.resolveContext();
+        var adapters = this.handlerConf.adapters;
+        if (adapters) {
+            this.adapters = this.createMethodSuppliers(adapters);
         }
+
+        var validators = this.handlerConf.validators;
+        if (validators) {
+            this.validators = this.createMethodSuppliers(validators);
+        }
+
+        this.resolveContext();
     }
 
     WidgetLayerBuilder.prototype = {
-        performRedirect: function (redirectUrl, redirectCondition) {
-            this.redirectUrl = redirectUrl ? redirectUrl : this.options.redirectUrl;
-            this.redirectCondition = isFunc(redirectCondition) ? redirectCondition : trueCondition;
-        },
         callContext: {
             layout: undefined,
             isOAuth: null,
@@ -457,51 +458,12 @@ var OKSDK = (function () {
             isIframe: null,
             isExternal: null
         },
-        handlerConfMap: {
-            'WidgetGroupAppPermissions': {},
-            'WidgetMediatopicPost':
-                new WidgetConfigurator('WidgetMediatopicPost')
-                    .withUiLayerName('postMediatopic') /* see: FAPI.UI.*, https://apiok.ru/search?q=FAPI.UI */
-                    .withUiAdapter(
-                        function (data, options) {
-                            return [data.uiLayerName, options.attachment];
-                        }
-                    ),
-            'WidgetInvite': {},
-            'WidgetSuggest': {}
-        },
-        validatorRegister: {
-            openUiLayer: [uiLayerCheck],
-            openIframeLayer: [iframeLayerCheck],
-            openPopup: [popupCheck]
-        },
-        validateAndRun: function () {
-            var validatorRegister = this.validatorRegister;
-            for (var method in validatorRegister) {
-                if (validatorRegister.hasOwnProperty(method)) {
-                    var result = true;
-                    var conditionsArray = validatorRegister[method];
-                    // todo:  add custom check
-                    //if (this.conditions) {
-                    //    conditionsArray.concat(this.conditions[method]);
-                    //}
-                    for (var i = 0, l = conditionsArray.length; i < l; i++) {
-                        if (conditionsArray[i]) {
-                            result = conditionsArray[i].apply(this);
-                        }
-                    }
-
-                    // убеждаемся, что такой метод есть в прототипе конструтора
-                    if (result && (!this.hasOwnProperty(method) && method in this)) {
-                        var adapter = this.adapters[method];
-                        if (adapter) {
-                            this.options = adapter(this.handlerConf, this.options);
-                        }
-                        return this[method]();
-                    }
-                }
-            }
-        },
+        methodRegister:
+            [
+                'openPopup',
+                'openUiLayer',
+                'openIframeLayer'
+            ],
         openPopup: function () {
             return widgetOpen(this.widgetName, this.options);
         },
@@ -510,6 +472,53 @@ var OKSDK = (function () {
         },
         openIframeLayer: function () {
             return window.console && console.log('Iframe-layer is in development');
+        },
+        validatorRegister: {
+            openUiLayer: function () {
+                var context = this.callContext;
+                return this.handlerConf.uiLayerName && !(context.isExternal || context.isMob);
+            },
+            openIframeLayer: function () {
+                return false;
+            },
+            openPopup: function () {
+                return true;
+            }
+        },
+        createMethodSuppliers: function (methodMap) {
+            var result = {};
+            var methodRegister = this.methodRegister;
+            for (var i = 0, l = methodRegister.length; i < l; i++) {
+                var m = methodRegister[i];
+                if (methodMap.hasOwnProperty(m)) {
+                    result[m] = methodMap[m];
+                }
+            }
+
+            return result;
+        },
+        run: function () {
+
+            this.options.client_id = this.options.client_id || state.app_id;
+            this.options.groupId = this.options.groupId || state.groupId;
+
+            var validatorRegister = this.validatorRegister;
+            for (var method in validatorRegister) {
+                var result = validatorRegister[method].call(this);
+                var customValidators = this.validators;
+                if (customValidators) {
+                    result = customValidators[method].call(this);
+                }
+
+                // убеждаемся, что такой метод есть в прототипе конструтора
+                if (result && (!this.hasOwnProperty(method) && method in this)) {
+                    var adapter = this.adapters[method];
+                    if (adapter) {
+                        this.options = adapter(this.handlerConf, this.options);
+                    }
+                    return this[method]();
+                }
+            }
         },
         resolveContext: resolveContext,
         changeParams: function (options) {
@@ -531,34 +540,7 @@ var OKSDK = (function () {
         configure: function (options) {
             this.options = options;
             return this;
-        },
-        run: function () {
-            var redirectCondition = this.redirectCondition;
-            if (redirectCondition && redirectCondition(state)) {
-                window.location.href = this.redirectUrl;
-            }
-            return this.validateAndRun();
         }
-    };
-
-
-
-
-    function uiLayerCheck() {
-        var context = this.callContext;
-        return this.handlerConf.uiLayerName && !(context.isExternal || context.isMob);
-    }
-
-    function iframeLayerCheck() {
-        return false;
-    }
-
-    function popupCheck() {
-        return true;
-    }
-
-    var trueCondition = function () {
-        return true;
     };
 
     /* todo: виджеты в леере
@@ -897,6 +879,14 @@ var OKSDK = (function () {
     }
 
     // ---------------------------------------------------------------------------------------------------
+    var mediatopicPost = new WidgetConfigurator('WidgetMediatopicPost')
+        .withUiLayerName('postMediatopic')
+        .withUiAdapter(
+            function (data, options) {
+                return [data.uiLayerName, options.attachment, options.status, options.platforms];
+            }
+        );
+
     return {
         init: init,
         REST: {
@@ -909,6 +899,9 @@ var OKSDK = (function () {
         Widgets: {
             Builder: WidgetLayerBuilder,
             WidgetConfigurator: WidgetConfigurator,
+            builds: {
+                mediatopicPost: mediatopicPost
+            },
             getBackButtonHtml: widgetBackButton,
             post: widgetMediatopicPost,
             invite: widgetInvite,
