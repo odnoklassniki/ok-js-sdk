@@ -273,16 +273,22 @@ var OKSDK = (function () {
     /**
      * Opens mediatopic post widget
      *
-     * @param {String} returnUrl callback url
-     * @param {Object} options options
+     * @param {String} returnUrl    callback url
+     * @param {Object} options      options
      * @param {Object} options.attachment mediatopic (feed) to be posted
+     * @param {boolean} useContext  use WidgetBuilder or use direct popup call
      */
-    function widgetMediatopicPost(returnUrl, options) {
+    function widgetMediatopicPost(returnUrl, options, useContext) {
         options = options || {};
         if (!options.attachment) {
             options = {attachment: options}
         }
         options.attachment = btoa(unescape(encodeURIComponent(toString(options.attachment))));
+
+        if (useContext) {
+            var mergedOptions = OKSDK.Util.mergeObject(options, {return: returnUrl}, false);
+            OKSDK.Widgets.builds.post.configure(mergedOptions).run();
+        }
         widgetOpen('WidgetMediatopicPost', options, returnUrl);
     }
 
@@ -291,8 +297,17 @@ var OKSDK = (function () {
      *
      * @see widgetSuggest widgetSuggest() for more details on arguments
      */
-    function widgetInvite(returnUrl, options) {
-        widgetOpen('WidgetInvite', options, returnUrl);
+    function widgetInvite(returnUrl, options, useContext) {
+        if (useContext) {
+            OKSDK.Widgets.builds.invite.configure(
+                OKSDK.Util.mergeObject(
+                    options,
+                    {return: returnUrl}
+                )
+            ).run();
+        } else {
+            widgetOpen('WidgetInvite', options, returnUrl);
+        }
     }
 
     /**
@@ -308,6 +323,20 @@ var OKSDK = (function () {
      */
     function widgetSuggest(returnUrl, options) {
         widgetOpen('WidgetSuggest', options, returnUrl);
+    }
+
+    function widgetGroupAppPermissions(scope, returnUrl, options) {
+        options = options || {};
+        OKSDK.Widgets.builds.askGroupAppPermissions.configure(
+            OKSDK.Util.mergeObject(
+                options,
+                {
+                    scope: (getClass(scope) == '[object Array]' ? scope.join(';') : scope),
+                    return: returnUrl
+                },
+                false
+            )
+        ).run();
     }
 
     function widgetOpen(widget, args, returnUrl) {
@@ -413,6 +442,12 @@ var OKSDK = (function () {
             this.adapters = adapters;
             return this;
         },
+        /**
+         * @param fn
+         * @param {Object} fn.data
+         * @param {Object} fn.options
+         * @returns {WidgetConfigurator}
+         */
         withUiAdapter: function(fn) {
             this.adapters.openUiLayer = fn;
             return this;
@@ -879,13 +914,6 @@ var OKSDK = (function () {
     }
 
     // ---------------------------------------------------------------------------------------------------
-    var mediatopicPost = new WidgetConfigurator('WidgetMediatopicPost')
-        .withUiLayerName('postMediatopic')
-        .withUiAdapter(
-            function (data, options) {
-                return [data.uiLayerName, options.attachment, options.status, options.platforms];
-            }
-        );
 
     return {
         init: init,
@@ -900,12 +928,28 @@ var OKSDK = (function () {
             Builder: WidgetLayerBuilder,
             WidgetConfigurator: WidgetConfigurator,
             builds: {
-                mediatopicPost: mediatopicPost
+                post: new WidgetLayerBuilder(
+                    new WidgetConfigurator('WidgetMediatopicPost')
+                        .withUiLayerName('postMediatopic')
+                        .withUiAdapter(function (data, options) {
+                            return [data.uiLayerName, options.attachment, options.status, options.platforms];
+                        })
+                ),
+                invite: new WidgetLayerBuilder(
+                    new WidgetConfigurator('WidgetInvite')
+                        .withUiLayerName('showInvite')
+                        .withUiAdapter(function (data, options) {
+                            return [data.uiLayerName, options.text, options.params, options.uids];
+                        })
+                ),
+                suggest: new WidgetLayerBuilder('WidgetSuggest'),
+                askGroupAppPermissions: new WidgetLayerBuilder('WidgetGroupAppPermissions')
             },
             getBackButtonHtml: widgetBackButton,
             post: widgetMediatopicPost,
             invite: widgetInvite,
-            suggest: widgetSuggest
+            suggest: widgetSuggest,
+            askGroupAppPermissions: widgetGroupAppPermissions
         },
         Util: {
             md5: md5,
