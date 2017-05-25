@@ -12,7 +12,7 @@ var OKSDK = (function () {
     const PLATFORM_REGISTER = {
         'w': WEB,
         'm': MOBILE,
-        'a': NATIVE_APP,
+        'n': NATIVE_APP,
         'e': EXTERNAL
     };
     var state = {
@@ -493,7 +493,7 @@ var OKSDK = (function () {
             isIframe: null,
             isExternal: null
         },
-        methodRegister:
+        widgetInterface:
             [
                 'openPopup',
                 'openUiLayer',
@@ -522,9 +522,9 @@ var OKSDK = (function () {
         },
         createMethodSuppliers: function (methodMap) {
             var result = {};
-            var methodRegister = this.methodRegister;
-            for (var i = 0, l = methodRegister.length; i < l; i++) {
-                var m = methodRegister[i];
+            var widgetInterface = this.widgetInterface;
+            for (var i = 0, l = widgetInterface.length; i < l; i++) {
+                var m = widgetInterface[i];
                 if (methodMap.hasOwnProperty(m)) {
                     result[m] = methodMap[m];
                 }
