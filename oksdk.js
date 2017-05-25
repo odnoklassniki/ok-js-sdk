@@ -472,20 +472,33 @@ var OKSDK = (function () {
             this.adapters = adapters;
             return this;
         },
+
         /**
-         * @param fn
-         * @param {Object} fn.data
-         * @param {Object} fn.options
+         * @callback adapterCallback
+         * @param {Object} data
+         * @param {Object} options
+         * @returns {Array}
+         */
+        /**
+         * @param {adapterCallback} fn
          * @returns {WidgetConfigurator}
          */
         withUiAdapter: function(fn) {
             this.adapters.openUiLayer = fn;
             return this;
         },
+        /**
+         * @param {adapterCallback} fn
+         * @returns {WidgetConfigurator}
+         */
         withPopupAdapter: function(fn) {
             this.adapters.openPopup = fn;
             return this;
         },
+        /**
+         * @param {adapterCallback} fn
+         * @returns {WidgetConfigurator}
+         */
         withIframeAdapter: function(fn) {
             this.adapters.openIframeLayer = fn;
             return this;
@@ -568,12 +581,11 @@ var OKSDK = (function () {
             this.options.groupId = this.options.groupId || state.groupId;
 
             var validatorRegister = this.validatorRegister;
+
             for (var method in validatorRegister) {
                 var result = validatorRegister[method].call(this);
                 var customValidators = this.validators;
-                if (customValidators) {
-                    result = customValidators[method].call(this);
-                }
+                result = customValidators ? customValidators[method].call(this) : result;
 
                 // убеждаемся, что такой метод есть в прототипе конструтора
                 if (result && (!this.hasOwnProperty(method) && method in this)) {
@@ -838,33 +850,42 @@ var OKSDK = (function () {
      * @returns {*}
      */
     function mergeObject(oldObj, newObj, rewrite) {
-        for (var k in newObj) {
-            if (newObj.hasOwnProperty(k)) {
-                if (oldObj.hasOwnProperty(k) && typeof rewrite !== 'undefined' && !rewrite) {
-                    continue;
-                }
-                var property = newObj[k];
-                if (getClass(property) === '[object Object]') {
-                    mergeObject(oldObj[k] = oldObj[k] || {}, property, rewrite);
-                } else {
-                    oldObj[k] = property;
+        if (getClass(newObj) == getClass._object && getClass(oldObj) == getClass._object) {
+            for (var k in newObj) {
+                if (newObj.hasOwnProperty(k)) {
+                    if (oldObj.hasOwnProperty(k) && typeof rewrite !== 'undefined' && !rewrite) {
+                        continue;
+                    }
+                    var property = newObj[k];
+                    if (getClass(property) == getClass._object) {
+                        mergeObject(oldObj[k] = oldObj[k] || {}, property, rewrite);
+                    } else {
+                        oldObj[k] = property;
+                    }
                 }
             }
+
+            return oldObj;
         }
 
-        return oldObj;
+        return new Error('Merged elements should be an objects');
     }
 
     function getClass(o) {
         return Object.prototype.toString.call(o);
     }
 
+    getClass._object = getClass({}); // [object Object]
+    getClass._function = getClass(nop); // [object Function]
+    getClass._array = getClass([]); // [object Array]
+    getClass._string = getClass(''); // [object String]
+
     function isFunc(obj) {
-        return getClass(obj) === "[object Function]";
+        return getClass(obj) === getClass._function;
     }
 
     function isString(obj) {
-        return Object.prototype.toString.call(obj) === "[object String]";
+        return Object.prototype.toString.call(obj) === getClass._string;
     }
 
     function toString(obj) {
