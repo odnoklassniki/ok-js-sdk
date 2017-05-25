@@ -306,16 +306,16 @@ var OKSDK = (function () {
      * @param {String} returnUrl    callback url
      * @param {Object} options      options
      * @param {Object} options.attachment mediatopic (feed) to be posted
-     * @param {boolean} forcePopup  use WidgetBuilder or use direct popup call
+     * @param {boolean} forcePopup  use WidgetBuilder or make direct popup call
      */
     function widgetMediatopicPost(returnUrl, options, forcePopup) {
         options = options || {};
         if (!options.attachment) {
             options = {attachment: options}
         }
-        options.attachment = btoa(unescape(encodeURIComponent(toString(options.attachment))));
 
         if (forcePopup) {
+            options.attachment = btoa(unescape(encodeURIComponent(toString(options.attachment))));
             widgetOpen('WidgetMediatopicPost', options, returnUrl);
         } else {
             var mergedOptions = OKSDK.Util.mergeObject(options, {return: returnUrl}, false);
@@ -948,7 +948,12 @@ var OKSDK = (function () {
                     new WidgetConfigurator('WidgetMediatopicPost')
                         .withUiLayerName('postMediatopic')
                         .withUiAdapter(function (data, options) {
-                            return [data.uiLayerName, options.attachment, options.status, options.platforms];
+                            return [
+                                data.uiLayerName,
+                                JSON.stringify(options.attachment),
+                                options.status ? 'on' : 'off',
+                                options.platforms ? options.platforms.join(',') : ''
+                            ];
                         })
                 ),
                 invite: new WidgetLayerBuilder(
