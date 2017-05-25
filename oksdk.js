@@ -846,7 +846,7 @@ var OKSDK = (function () {
      *
      * @param oldObj {Object}    obj where copy to
      * @param newObj {Object}    obj where copied from
-     * @param rewrite {Boolean} [rewrite = true]
+     * @param [rewrite=true] {boolean}
      * @returns {*}
      */
     function mergeObject(oldObj, newObj, rewrite) {
