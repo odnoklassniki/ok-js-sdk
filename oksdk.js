@@ -17,7 +17,7 @@ var OKSDK = (function () {
     };
     var state = {
         app_id: 0, app_key: '',
-        sessionKey: '', accessToken: '', sessionSecretKey: '', apiServer: '', widgetServer: '',
+        sessionKey: '', accessToken: '', sessionSecretKey: '', apiServer: '', widgetServer: '', mobServer: '',
         baseUrl: '',
         container: false,
         header_widget: ''
@@ -67,6 +67,7 @@ var OKSDK = (function () {
         state.sessionSecretKey = params["session_secret_key"] || hParams['session_secret_key'];
         state.apiServer = args["api_server"] || params["api_server"] || OK_API_SERVER;
         state.widgetServer = args["widget_server"] || params['widget_server'] || OK_CONNECT_URL;
+        state.mobServer = args["mob_server"] || params["mob_server"] || OK_MOB_URL;
         state.baseUrl = state.apiServer + "fb.do";
         state.header_widget = params['header_widget'];
         state.container = params['container'];
@@ -121,6 +122,26 @@ var OKSDK = (function () {
         headElem.appendChild(script);
     }
 
+    function restCallPOST(query, callback) {
+        const xhr = new XMLHttpRequest();
+        xhr.open("POST", state.baseUrl, true);
+        xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState ===  XMLHttpRequest.DONE) {
+                if (xhr.status === 200) {
+                    if (isFunc(callback)) {
+                        callback("ok", xhr.responseText, null);
+                    }
+                } else {
+                    if (isFunc(callback)) {
+                        callback("error", null, xhr.responseText);
+                    }
+                }
+            }
+        };
+        xhr.send(query);
+    }
+
     /**
      * Calls a REST request
      *
@@ -131,10 +152,10 @@ var OKSDK = (function () {
      * @param {boolean} [callOpts.no_session] true if REST method prohibits session
      * @param {boolean} [callOpts.no_sig] true if no signature is required for the method
      * @param {string} [callOpts.app_secret_key] required for non-session requests
+     * @param {string} [callOpts.use_post] send request via POST
      * @returns {string}
      */
     function restCall(method, params, callback, callOpts) {
-        var query = "?";
         params = params || {};
         params.method = method;
         params = restFillParams(params);
@@ -147,12 +168,21 @@ var OKSDK = (function () {
             params['sig'] = calcSignature(params, secret);
         }
 
-        for (var key in params) {
+        let query = "";
+        for (const key in params) {
             if (params.hasOwnProperty(key)) {
-                query += key + "=" + encodeURIComponent(params[key]) + "&";
+                if (query.length !== 0) {
+                    query += '&';
+                }
+                query += key + "=" + encodeURIComponent(params[key]);
             }
         }
-        var callbackId = "__oksdk__callback_" + (++rest_counter);
+
+        if (callOpts && callOpts.use_post) {
+            return restCallPOST(query, callback);
+        }
+
+        const callbackId = "__oksdk__callback_" + (++rest_counter);
         window[callbackId] = function (status, data, error) {
             if (isFunc(callback)) {
                 callback(status, data, error);
@@ -162,7 +192,7 @@ var OKSDK = (function () {
                 delete window[callbackId];
             } catch (e) {}
         };
-        restLoad(state.baseUrl + query + "js_callback=" + callbackId);
+        restLoad(state.baseUrl + '?' + query + "&js_callback=" + callbackId);
         return callbackId;
     }
 
@@ -228,7 +258,7 @@ var OKSDK = (function () {
         params['code'] = productCode;
 
         options = options || {};
-        const host = options['mob_pay_url'] || OK_MOB_URL;
+        const host = options['mob_pay_url'] || state.mobServer;
 
         params["application_key"] = state.app_key;
         if (state.sessionKey) {
