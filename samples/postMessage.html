@@ -1,0 +1,33 @@
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>OKSDK - postMessage </title>
+</head>
+<body>
+
+
+<script type="text/javascript">
+function send() {
+try {
+var message = window.parent.document.getElementById('message').value;
+var origin = window.parent.document.getElementById('origin').value;
+var object  = window.parent.document.getElementById('object').value;
+window[object].postMessage(message,origin);
+}catch(e) {
+alert(e);
+}
+}
+
+window.addEventListener('message',function(e){alert(e.origin+" "+e.data);});
+</script>
+<input type="text" id="message" value="hello"/>
+<input type="text" id="origin" value="https://ok.ru"/>
+<input type="text" id="object" value="parent"/>
+
+<input type="button" value="send" onclick='send()' />
+
+
+
+
+</body>
+</html>
