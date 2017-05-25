@@ -4,11 +4,23 @@ var OKSDK = (function () {
     const OK_MOB_URL = 'https://m.ok.ru/';
     const OK_API_SERVER = 'https://api.ok.ru/';
 
+    const MOBILE = 'mobile';
+    const WEB = 'web';
+    const NATIVE_APP = 'application';
+    const EXTERNAL = 'external';
+
+    const PLATFORM_REGISTER = {
+        'w': WEB,
+        'm': MOBILE,
+        'a': NATIVE_APP,
+        'e': EXTERNAL
+    };
     var state = {
         app_id: 0, app_key: '',
         sessionKey: '', accessToken: '', sessionSecretKey: '', apiServer: '', widgetServer: '',
         baseUrl: '',
-        container: false, header_widget: ''
+        container: false,
+        header_widget: ''
     };
     var sdk_success = nop;
     var sdk_failure = nop;
@@ -43,24 +55,32 @@ var OKSDK = (function () {
 
         state.app_id = args.app_id;
         state.app_key = params["application_key"] || args.app_key;
-        state.sessionKey = params["session_key"];
-        state.accessToken = hParams['access_token'];
-        state.sessionSecretKey = params["session_secret_key"] || hParams['session_secret_key'];
-        state.apiServer = args["api_server"] || params["api_server"] || OK_API_SERVER;
-        state.widgetServer = args["widget_server"] || params['widget_server'] || OK_CONNECT_URL;
-        state.baseUrl = state.apiServer + "fb.do";
-        state.header_widget = params['header_widget'];
-        state.container = params['container'];
 
         if (!state.app_id || !state.app_key) {
             sdk_failure('Required arguments app_id/app_key not passed');
             return;
         }
 
+        state.sessionKey = params["session_key"];
+        state.accessToken = hParams['access_token'];
+        state.groupId = params['group_id'] || hParams['group_id'] || args['group_id'];
+        state.sessionSecretKey = params["session_secret_key"] || hParams['session_secret_key'];
+        state.apiServer = args["api_server"] || params["api_server"] || OK_API_SERVER;
+        state.widgetServer = args["widget_server"] || params['widget_server'] || OK_CONNECT_URL;
+        state.baseUrl = state.apiServer + "fb.do";
+        state.header_widget = params['header_widget'];
+        state.container = params['container'];
+        state.layout = (params['layout'] || hParams['layout'])
+            || (params['api_server']
+                ? (params['apiconnection']
+                    ? 'w'
+                    : 'm')
+                : args.layout);
+
         if (!params['api_server']) {
             if ((hParams['access_token'] == null) && (hParams['error'] == null)) {
                 window.location = state.widgetServer + 'oauth/authorize' +
-                    '?client_id=' + args['app_id'] +
+                    '?client_id=' + args.app_id +
                     '&scope=' + (args.oauth.scope || 'VALUABLE_ACCESS') +
                     '&response_type=' + 'token' +
                     '&redirect_uri=' + (args.oauth.url || window.location.href) +
@@ -73,6 +93,8 @@ var OKSDK = (function () {
                 return;
             }
         }
+
+
         sdk_success();
     }
 
@@ -251,16 +273,22 @@ var OKSDK = (function () {
     /**
      * Opens mediatopic post widget
      *
-     * @param {String} returnUrl callback url
-     * @param {Object} options options
+     * @param {String} returnUrl    callback url
+     * @param {Object} options      options
      * @param {Object} options.attachment mediatopic (feed) to be posted
+     * @param {boolean} useContext  use WidgetBuilder or use direct popup call
      */
-    function widgetMediatopicPost(returnUrl, options) {
+    function widgetMediatopicPost(returnUrl, options, useContext) {
         options = options || {};
         if (!options.attachment) {
             options = {attachment: options}
         }
         options.attachment = btoa(unescape(encodeURIComponent(toString(options.attachment))));
+
+        if (useContext) {
+            var mergedOptions = OKSDK.Util.mergeObject(options, {return: returnUrl}, false);
+            OKSDK.Widgets.builds.post.configure(mergedOptions).run();
+        }
         widgetOpen('WidgetMediatopicPost', options, returnUrl);
     }
 
@@ -269,8 +297,17 @@ var OKSDK = (function () {
      *
      * @see widgetSuggest widgetSuggest() for more details on arguments
      */
-    function widgetInvite(returnUrl, options) {
-        widgetOpen('WidgetInvite', options, returnUrl);
+    function widgetInvite(returnUrl, options, useContext) {
+        if (useContext) {
+            OKSDK.Widgets.builds.invite.configure(
+                OKSDK.Util.mergeObject(
+                    options,
+                    {return: returnUrl}
+                )
+            ).run();
+        } else {
+            widgetOpen('WidgetInvite', options, returnUrl);
+        }
     }
 
     /**
@@ -288,10 +325,64 @@ var OKSDK = (function () {
         widgetOpen('WidgetSuggest', options, returnUrl);
     }
 
+    function widgetGroupAppPermissions(scope, returnUrl, options) {
+        options = options || {};
+        OKSDK.Widgets.builds.askGroupAppPermissions.configure(
+            OKSDK.Util.mergeObject(
+                options,
+                {
+                    scope: (getClass(scope) == '[object Array]' ? scope.join(';') : scope),
+                    return: returnUrl
+                },
+                false
+            )
+        ).run();
+    }
+
     function widgetOpen(widget, args, returnUrl) {
         args = args || {};
-        args.return = returnUrl;
+        args.return = args.return || returnUrl;
+        var popupConfig = args.popupConfig;
+        var popup;
 
+        if (popupConfig) {
+            var w = popupConfig.width;
+            var h = popupConfig.height;
+            var documentElement = document.documentElement;
+            if (typeof popupConfig.left == 'undefined') {
+                var screenLeft = window.screenLeft;
+                var innerWidth = window.innerWidth;
+                var screenOffsetLeft = typeof screenLeft == 'undefined' ? screen.left : screenLeft;
+                var screenWidth = innerWidth ? innerWidth : documentElement.clientWidth ? documentElement.clientWidth : screen.width;
+                var left = (screenWidth / 2 - w / 2) + screenOffsetLeft;
+            }
+            if (typeof popupConfig.top == 'undefined') {
+                var screenTop = window.screenTop;
+                var screenOffsetTop = typeof screenTop == 'undefined'? screen.top : screenTop;
+                var innerHeight = window.innerHeight;
+                var screenHeight = innerHeight ? innerHeight : documentElement.clientHeight ? documentElement.clientHeight : screen.height;
+                var top = (screenHeight / 2 - h / 2) + screenOffsetTop;
+            }
+
+            var popupName = popupConfig.name + Date.now();
+            popup = window.open(
+                getLinkOnWidget(widget, args),
+                popupName,
+                'width=' + w + ',' +
+                'height=' + h + ',' +
+                'top=' + top + ',' +
+                'left=' + left +
+                (popupConfig.options ? (',' + popupConfig.options) : '')
+            );
+
+        } else {
+            popup = window.open(getLinkOnWidget(widget, args));
+        }
+
+        return popup;
+    }
+
+    function getLinkOnWidget(widget, args) {
         var keys = [];
         for (var arg in args) {
             keys.push(arg.toString());
@@ -299,7 +390,14 @@ var OKSDK = (function () {
         keys.sort();
 
         var sigSource = '';
-        var query = state.widgetServer + 'dk?st.cmd=' + widget + '&st.app=' + state.app_id;
+        var query = state.widgetServer +
+            'dk?st.cmd=' + widget +
+            '&st.app=' + state.app_id;
+
+        if (state.groupId) {
+            query += '&st.groupId=' + state.groupId;
+        }
+
         for (var i = 0; i < keys.length; i++) {
             var key = "st." + keys[i];
             var val = args[keys[i]];
@@ -316,8 +414,222 @@ var OKSDK = (function () {
         if (state.sessionKey) {
             query += '&st.session_key=' + state.sessionKey;
         }
-        window.open(query);
+        return query;
     }
+
+    // ---------------------------------------------------------------------------------------------------
+    // SDK constructor
+    // ---------------------------------------------------------------------------------------------------
+
+
+    function WidgetConfigurator(widgetName) {
+        this.name = widgetName;
+        this.adapters = {};
+        this.uiLayerName = null;
+    }
+
+    WidgetConfigurator.prototype = {
+        /* one of FAPI.UI methods, more: https://apiok.ru/search?q=FAPI.UI */
+        withUiLayerName: function(name) {
+            this.uiLayerName = name;
+            return this;
+        },
+        withValidators: function (validators) {
+            this.validators = validators;
+            return this;
+        },
+        withAdapters: function (adapters) {
+            this.adapters = adapters;
+            return this;
+        },
+        /**
+         * @param fn
+         * @param {Object} fn.data
+         * @param {Object} fn.options
+         * @returns {WidgetConfigurator}
+         */
+        withUiAdapter: function(fn) {
+            this.adapters.openUiLayer = fn;
+            return this;
+        },
+        withPopupAdapter: function(fn) {
+            this.adapters.openPopup = fn;
+            return this;
+        },
+        withIframeAdapter: function(fn) {
+            this.adapters.openIframeLayer = fn;
+            return this;
+        }
+    };
+
+    function WidgetLayerBuilder(widget, options) {
+        if (widget instanceof WidgetConfigurator === false) {
+            widget = new WidgetConfigurator(widget);
+        }
+
+        this.widgetName = widget.name;
+        this.handlerConf = widget;
+        this.options = options || {};
+
+        var adapters = this.handlerConf.adapters;
+        if (adapters) {
+            this.adapters = this.createMethodSuppliers(adapters);
+        }
+
+        var validators = this.handlerConf.validators;
+        if (validators) {
+            this.validators = this.createMethodSuppliers(validators);
+        }
+
+        this.resolveContext();
+    }
+
+    WidgetLayerBuilder.prototype = {
+        callContext: {
+            layout: undefined,
+            isOAuth: null,
+            isOKApp: null,
+            isPopup: null,
+            isIframe: null,
+            isExternal: null
+        },
+        methodRegister:
+            [
+                'openPopup',
+                'openUiLayer',
+                'openIframeLayer'
+            ],
+        openPopup: function () {
+            return widgetOpen(this.widgetName, this.options);
+        },
+        openUiLayer: function () {
+            return invokeUIMethod.apply(null, this.options);
+        },
+        openIframeLayer: function () {
+            return window.console && console.log('Iframe-layer is in development');
+        },
+        validatorRegister: {
+            openUiLayer: function () {
+                var context = this.callContext;
+                return this.handlerConf.uiLayerName && !(context.isExternal || context.isMob);
+            },
+            openIframeLayer: function () {
+                return false;
+            },
+            openPopup: function () {
+                return true;
+            }
+        },
+        createMethodSuppliers: function (methodMap) {
+            var result = {};
+            var methodRegister = this.methodRegister;
+            for (var i = 0, l = methodRegister.length; i < l; i++) {
+                var m = methodRegister[i];
+                if (methodMap.hasOwnProperty(m)) {
+                    result[m] = methodMap[m];
+                }
+            }
+
+            return result;
+        },
+        run: function () {
+
+            this.options.client_id = this.options.client_id || state.app_id;
+            this.options.groupId = this.options.groupId || state.groupId;
+
+            var validatorRegister = this.validatorRegister;
+            for (var method in validatorRegister) {
+                var result = validatorRegister[method].call(this);
+                var customValidators = this.validators;
+                if (customValidators) {
+                    result = customValidators[method].call(this);
+                }
+
+                // убеждаемся, что такой метод есть в прототипе конструтора
+                if (result && (!this.hasOwnProperty(method) && method in this)) {
+                    var adapter = this.adapters[method];
+                    if (adapter) {
+                        this.options = adapter(this.handlerConf, this.options);
+                    }
+                    return this[method]();
+                }
+            }
+        },
+        resolveContext: resolveContext,
+        changeParams: function (options) {
+            if (this.options) {
+                mergeObject(this.options, options, true);
+                return this;
+            } else {
+                return this.configure(options);
+            }
+        },
+        addParams: function (options) {
+            if (this.options) {
+                mergeObject(this.options, options, false);
+                return this;
+            } else {
+                return this.configure(options);
+            }
+        },
+        configure: function (options) {
+            this.options = options;
+            return this;
+        }
+    };
+
+    /* todo: виджеты в леере
+    function createIframe(uri, customCssClass) {
+        var iframe = document.createElement('iframe');
+        var iframeClassName = typeof customCssClass === 'undefined' ? "" : customCssClass;
+        iframe.src = uri;
+        iframe.className = ("ok-sdk-frame " + iframeClassName);
+
+        document.body.appendChild(iframe);
+
+        //iframe.contentWindow.postMessage({'test-message': 7}, "*")
+    }
+    */
+
+    function invokeUIMethod() {
+        var argStr = "";
+        for (var i = 0, l = arguments.length; i < l; i++) {
+            var arg = arguments[i];
+
+            if (i > 0) {
+                argStr += '$';
+            }
+            if (arg != null) {
+                argStr += encodeURIComponent(String(arg));
+            }
+        }
+        window.parent.postMessage("__FAPI__" + argStr, "*");
+    }
+
+    /**
+     * @class WidgetLayerBuilder
+     *
+     * @returns {Object} context
+     * @returns {Boolean} context.platform
+     * @returns {Boolean} context.isOKApp
+     * @returns {Boolean} context.isOauth
+     * @returns {Boolean} context.isIframe
+     * @returns {Boolean} context.isExternal
+     */
+    function resolveContext() {
+        var stateMode = state.layout && state.layout.toLowerCase();
+        var context = {
+            layout: PLATFORM_REGISTER[stateMode],
+            isOKApp: state.container || false,
+            isOAuth: stateMode === 'o',
+            isIframe: window.parent !== window,
+            isPopup: !!window.opener
+        };
+        context.isExternal = context.layout == EXTERNAL || !(context.isIframe || context.isPopup || context.isOAuth);
+        context.isMob = context.layout == WEB || context.layout == NATIVE_APP;
+        this.callContext = context;
+    }
+
 
     // ---------------------------------------------------------------------------------------------------
     // Utils
@@ -488,8 +800,37 @@ var OKSDK = (function () {
         return rhex(a) + rhex(b) + rhex(c) + rhex(d);
     }
 
+    /**
+     *
+     * @param oldObj {Object}    obj where copy to
+     * @param newObj {Object}    obj where copied from
+     * @param rewrite {Boolean} [rewrite = true]
+     * @returns {*}
+     */
+    function mergeObject(oldObj, newObj, rewrite) {
+        for (var k in newObj) {
+            if (newObj.hasOwnProperty(k)) {
+                if (oldObj.hasOwnProperty(k) && typeof rewrite !== 'undefined' && !rewrite) {
+                    continue;
+                }
+                var property = newObj[k];
+                if (getClass(property) === '[object Object]') {
+                    mergeObject(oldObj[k] = oldObj[k] || {}, property, rewrite);
+                } else {
+                    oldObj[k] = property;
+                }
+            }
+        }
+
+        return oldObj;
+    }
+
+    function getClass(o) {
+        return Object.prototype.toString.call(o);
+    }
+
     function isFunc(obj) {
-        return Object.prototype.toString.call(obj) === "[object Function]";
+        return getClass(obj) === "[object Function]";
     }
 
     function isString(obj) {
@@ -517,7 +858,7 @@ var OKSDK = (function () {
                 var nameValue = nameValues[i].split("=");
                 var name = nameValue[0];
                 var value = nameValue[1];
-                value = decodeURIComponent(value.replace(/\+/g, " "));
+                value = value && decodeURIComponent(value.replace(/\+/g, " "));
                 res[name] = value;
             }
         }
@@ -533,21 +874,11 @@ var OKSDK = (function () {
     }
 
     /** stub func */
-    function nop() {}
-
-    /**
-     * @callback onSuccessCallback
-     * @param {String} result
-     */
-
-    /**
-     * @callback restCallback
-     * @param {String} code (either 'ok' or 'error')
-     * @param {Object} data success data
-     * @param {Object} error error data
-     */
+    function nop() {
+    }
 
     // ---------------------------------------------------------------------------------------------------
+
     return {
         init: init,
         REST: {
@@ -558,10 +889,31 @@ var OKSDK = (function () {
             show: paymentShow
         },
         Widgets: {
+            Builder: WidgetLayerBuilder,
+            WidgetConfigurator: WidgetConfigurator,
+            builds: {
+                post: new WidgetLayerBuilder(
+                    new WidgetConfigurator('WidgetMediatopicPost')
+                        .withUiLayerName('postMediatopic')
+                        .withUiAdapter(function (data, options) {
+                            return [data.uiLayerName, options.attachment, options.status, options.platforms];
+                        })
+                ),
+                invite: new WidgetLayerBuilder(
+                    new WidgetConfigurator('WidgetInvite')
+                        .withUiLayerName('showInvite')
+                        .withUiAdapter(function (data, options) {
+                            return [data.uiLayerName, options.text, options.params, options.uids];
+                        })
+                ),
+                suggest: new WidgetLayerBuilder('WidgetSuggest'),
+                askGroupAppPermissions: new WidgetLayerBuilder('WidgetGroupAppPermissions')
+            },
             getBackButtonHtml: widgetBackButton,
             post: widgetMediatopicPost,
             invite: widgetInvite,
-            suggest: widgetSuggest
+            suggest: widgetSuggest,
+            askGroupAppPermissions: widgetGroupAppPermissions
         },
         Util: {
             md5: md5,
@@ -570,7 +922,8 @@ var OKSDK = (function () {
             encodeBase64: btoa,
             decodeBase64: atob,
             getRequestParameters: getRequestParameters,
-            toString: toString
+            toString: toString,
+            mergeObject: mergeObject
         }
     };
 })();
