@@ -306,20 +306,21 @@ var OKSDK = (function () {
      * @param {String} returnUrl    callback url
      * @param {Object} options      options
      * @param {Object} options.attachment mediatopic (feed) to be posted
-     * @param {boolean} useContext  use WidgetBuilder or use direct popup call
+     * @param {boolean} forcePopup  use WidgetBuilder or use direct popup call
      */
-    function widgetMediatopicPost(returnUrl, options, useContext) {
+    function widgetMediatopicPost(returnUrl, options, forcePopup) {
         options = options || {};
         if (!options.attachment) {
             options = {attachment: options}
         }
         options.attachment = btoa(unescape(encodeURIComponent(toString(options.attachment))));
 
-        if (useContext) {
+        if (forcePopup) {
+            widgetOpen('WidgetMediatopicPost', options, returnUrl);
+        } else {
             var mergedOptions = OKSDK.Util.mergeObject(options, {return: returnUrl}, false);
             OKSDK.Widgets.builds.post.configure(mergedOptions).run();
         }
-        widgetOpen('WidgetMediatopicPost', options, returnUrl);
     }
 
     /**
@@ -327,16 +328,16 @@ var OKSDK = (function () {
      *
      * @see widgetSuggest widgetSuggest() for more details on arguments
      */
-    function widgetInvite(returnUrl, options, useContext) {
-        if (useContext) {
+    function widgetInvite(returnUrl, options, forcePopup) {
+        if (forcePopup) {
+            widgetOpen('WidgetInvite', options, returnUrl);
+        } else {
             OKSDK.Widgets.builds.invite.configure(
                 OKSDK.Util.mergeObject(
                     options,
                     {return: returnUrl}
                 )
             ).run();
-        } else {
-            widgetOpen('WidgetInvite', options, returnUrl);
         }
     }
 
