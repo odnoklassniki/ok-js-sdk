@@ -377,6 +377,7 @@ var OKSDK = (function () {
         var popup;
 
         if (popupConfig) {
+            delete args.popupConfig;
             var w = popupConfig.width;
             var h = popupConfig.height;
             var documentElement = document.documentElement;
