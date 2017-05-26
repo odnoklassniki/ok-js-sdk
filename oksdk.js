@@ -517,25 +517,51 @@ var OKSDK = (function () {
 
         var adapters = this.handlerConf.adapters;
         if (adapters) {
-            this.adapters = this.createMethodSuppliers(adapters);
+            this.adapters = this._createMethodSuppliers(adapters);
         }
 
         var validators = this.handlerConf.validators;
         if (validators) {
-            this.validators = this.createMethodSuppliers(validators);
+            this.validators = this._createMethodSuppliers(validators);
         }
 
-        this.resolveContext();
+        this._callContext = resolveContext();
     }
 
     WidgetLayerBuilder.prototype = {
-        callContext: {
-            layout: undefined,
-            isOAuth: null,
-            isOKApp: null,
-            isPopup: null,
-            isIframe: null,
-            isExternal: null
+        /**
+         * @private
+         */
+        _callContext: {},
+        /**
+         * @private
+         */
+        _validatorRegister: {
+            openUiLayer: function () {
+                var context = this._callContext;
+                return this.handlerConf.uiLayerName && !(context.isExternal || context.isMob);
+            },
+            openIframeLayer: function () {
+                return false;
+            },
+            openPopup: function () {
+                return true;
+            }
+        },
+        /**
+         * @private
+         */
+        _createMethodSuppliers: function (methodMap) {
+            var result = {};
+            var widgetInterface = this.widgetInterface;
+            for (var i = 0, l = widgetInterface.length; i < l; i++) {
+                var m = widgetInterface[i];
+                if (methodMap.hasOwnProperty(m)) {
+                    result[m] = methodMap[m];
+                }
+            }
+
+            return result;
         },
         widgetInterface:
             [
@@ -552,36 +578,13 @@ var OKSDK = (function () {
         openIframeLayer: function () {
             return window.console && console.log('Iframe-layer is in development');
         },
-        validatorRegister: {
-            openUiLayer: function () {
-                var context = this.callContext;
-                return this.handlerConf.uiLayerName && !(context.isExternal || context.isMob);
-            },
-            openIframeLayer: function () {
-                return false;
-            },
-            openPopup: function () {
-                return true;
-            }
-        },
-        createMethodSuppliers: function (methodMap) {
-            var result = {};
-            var widgetInterface = this.widgetInterface;
-            for (var i = 0, l = widgetInterface.length; i < l; i++) {
-                var m = widgetInterface[i];
-                if (methodMap.hasOwnProperty(m)) {
-                    result[m] = methodMap[m];
-                }
-            }
-
-            return result;
-        },
         run: function () {
 
-            this.options.client_id = this.options.client_id || state.app_id;
-            this.options.groupId = this.options.groupId || state.groupId;
+            var options = this.options;
+            options.client_id = options.client_id || state.app_id;
+            options.groupId = options.groupId || state.groupId;
 
-            var validatorRegister = this.validatorRegister;
+            var validatorRegister = this._validatorRegister;
 
             for (var method in validatorRegister) {
                 var result = validatorRegister[method].call(this);
@@ -592,13 +595,12 @@ var OKSDK = (function () {
                 if (result && (!this.hasOwnProperty(method) && method in this)) {
                     var adapter = this.adapters[method];
                     if (adapter) {
-                        this.options = adapter(this.handlerConf, this.options);
+                        this.options = adapter(this.handlerConf, options);
                     }
                     return this[method]();
                 }
             }
         },
-        resolveContext: resolveContext,
         changeParams: function (options) {
             if (this.options) {
                 mergeObject(this.options, options, true);
@@ -652,12 +654,13 @@ var OKSDK = (function () {
     /**
      * @class WidgetLayerBuilder
      *
-     * @returns {Object} context
      * @returns {Boolean} context.platform
      * @returns {Boolean} context.isOKApp
      * @returns {Boolean} context.isOauth
      * @returns {Boolean} context.isIframe
+     * @returns {Boolean} context.isPopup
      * @returns {Boolean} context.isExternal
+     * @returns {Object} context
      */
     function resolveContext() {
         var stateMode = state.layout && state.layout.toLowerCase();
@@ -670,7 +673,7 @@ var OKSDK = (function () {
         };
         context.isExternal = context.layout == EXTERNAL || !(context.isIframe || context.isPopup || context.isOAuth);
         context.isMob = context.layout == WEB || context.layout == NATIVE_APP;
-        this.callContext = context;
+        return context;
     }
 
 
@@ -955,6 +958,10 @@ var OKSDK = (function () {
                                 options.platforms ? options.platforms.join(',') : ''
                             ];
                         })
+                        .withPopupAdapter(function (data, options) {
+                            options.attachment = btoa(unescape(encodeURIComponent(toString(options.attachment))));
+                            return options;
+                        })
                 ),
                 invite: new WidgetLayerBuilder(
                     new WidgetConfigurator('WidgetInvite')
@@ -980,6 +987,7 @@ var OKSDK = (function () {
             decodeBase64: atob,
             getRequestParameters: getRequestParameters,
             toString: toString,
+            resolveContext: resolveContext,
             mergeObject: mergeObject
         }
     };
