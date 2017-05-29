@@ -2,11 +2,49 @@
 <head>
     <meta charset="UTF-8">
     <title>OKSDK - postMessage </title>
+	<script type="text/javascript" src="https://api.ok.ru/js/fapi5.js" defer="defer"></script>
 </head>
 <body>
 
 
 <script type="text/javascript">
+function initFapi() {
+var rParams = FAPI.Util.getRequestParameters();
+FAPI.init(rParams["api_server"], rParams["apiconnection"],
+          /*
+          * Первый параметр:
+          * функция, которая будет вызвана после успешной инициализации.
+          */
+          function() {
+              alert("Инициализация прошла успешно");
+              // здесь можно вызывать методы API
+          },
+          /*
+          * Второй параметр:
+          * функция, которая будет вызвана, если инициализация не удалась.
+          */
+          function(error) {
+              alert("Ошибка инициализации");
+          }
+);
+}
+function API_callback(method, result, data) {
+alert('Callback:'+method+','+ result+','+ JSON.stringify(data));
+}
+function invokeUIMethod() {
+try {
+var method = window.parent.document.getElementById('method').value;
+var args = window.parent.document.getElementById('args').value;
+var a = [method];
+if(args.length > 0) {
+  JSON.parse(args).map(function(e){a.push(e);});
+}
+FAPI.invokeUIMethod.apply(FAPI,a);
+}catch(e) {
+alert(e);
+}
+}
+
 function send() {
 try {
 var message = window.parent.document.getElementById('message').value;
@@ -21,10 +59,19 @@ alert(e);
 window.addEventListener('message',function(e){alert(e.origin+" "+e.data);});
 </script>
 <input type="text" id="message" value="hello"/>
-<input type="text" id="origin" value="https://ok.ru"/>
+<input type="text" id="message" value="hello"/>
 <input type="text" id="object" value="parent"/>
 
 <input type="button" value="send" onclick='send()' />
+<br>
+<br>
+<input type="button" value="initFapi" onclick='initFapi()' />
+<br>
+<input type="text" id="method" value="showPayment"/>
+<input type="text" id="args" value='["a",1,"c"]'/>
+<input type="button" value="invokeUIMethod" onclick='invokeUIMethod()' />
+
+
 
 
 
