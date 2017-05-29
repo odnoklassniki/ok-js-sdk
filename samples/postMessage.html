@@ -141,7 +141,7 @@ var FAPI = {
                     argStr += encodeURIComponent(String(arg));
                 }
             }
-            if(OKApp) {
+            if(window.hasOwnProperty('OKApp') && OKApp.hasOwnProperty('postMessage')) {
                 OKApp.postMessage("__FAPI__" + argStr, FAPI.HTML5.webServerUrl);
             } else {
                 parent.postMessage("__FAPI__" + argStr, FAPI.HTML5.webServerUrl);
