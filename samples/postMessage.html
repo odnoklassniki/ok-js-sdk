@@ -47,7 +47,7 @@ var FAPI = {
 
         FAPI.Client.initialize(params, hParams, args);
         if (api_server) {
-            this.mode = apiConnection ? 'W' : 'M';
+            this.mode = 'W';
             if (this.mode == 'W') {
                 if (!FAPI.Util.isFunc(window.postMessage)) {
                     this.mode = 'F';
