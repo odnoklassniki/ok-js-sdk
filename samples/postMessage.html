@@ -33,8 +33,8 @@ alert('Callback:'+method+','+ result+','+ JSON.stringify(data));
 }
 function invokeUIMethod() {
 try {
-var method = window.parent.document.getElementById('method').value;
-var args = window.parent.document.getElementById('args').value;
+var method = window.document.getElementById('method').value;
+var args = window.document.getElementById('args').value;
 var a = [method];
 if(args.length > 0) {
   JSON.parse(args).map(function(e){a.push(e);});
@@ -47,9 +47,9 @@ alert(e);
 
 function send() {
 try {
-var message = window.parent.document.getElementById('message').value;
-var origin = window.parent.document.getElementById('origin').value;
-var object  = window.parent.document.getElementById('object').value;
+var message = window.document.getElementById('message').value;
+var origin = window.document.getElementById('origin').value;
+var object  = window.document.getElementById('object').value;
 window[object].postMessage(message,origin);
 }catch(e) {
 alert(e);
