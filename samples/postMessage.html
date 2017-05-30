@@ -658,11 +658,22 @@ var MD5 = (function () {
 }());
 
 	</script>
+    <style>
+        body {
+            background-image: url("https://static.pexels.com/photos/2324/skyline-buildings-new-york-skyscrapers.jpg");
+            }
+
+        form {
+            background-color: #ffffff;
+            }
+
+    </style>
 </head>
 <body>
 
 
 <script type="text/javascript">
+console.log('page common script start: ', Date.now() - window.performance.timing.connectStart);
 function initFapi() {
 var rParams = FAPI.Util.getRequestParameters();
 // TODO: dmitrylapynov: workaround till we know protocol about native calls;
@@ -713,7 +724,9 @@ alert(e);
 }
 
 window.addEventListener('message',function(e){alert(e.origin+" "+e.data);});
+console.log('page common script end: ', Date.now() - window.performance.timing.connectStart);
 </script>
+
 <input type="text" id="message" value="hello"/>
 <input type="text" id="message" value="hello"/>
 <input type="text" id="object" value="parent"/>
@@ -727,9 +740,11 @@ window.addEventListener('message',function(e){alert(e.origin+" "+e.data);});
 <input type="text" id="args" value='["a",1,"c"]'/>
 <input type="button" value="invokeUIMethod" onclick='invokeUIMethod()' />
 
-
-
-
+<!--TODO: дадим немного веса страничке-->
+<div style="margin-top: 100px">
+    <img src="https://static.pexels.com/photos/2156/sky-earth-space-working.jpg" width="50%">
+    <img src="https://static.pexels.com/photos/33109/fall-autumn-red-season.jpg" width="50%" style="margin-left: 50%">
+</div>
 
 
 </body>
