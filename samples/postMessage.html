@@ -2,6 +2,17 @@
 <head>
     <meta charset="UTF-8">
     <title>OKSDK - postMessage </title>
+    <script>
+        function lookForOKApp(e) {
+            var date = new Date();
+            console.log(e.type,
+                date.getSeconds() + ':' + date.getMilliseconds(),
+                'OKApp: ' + window.OKApp
+            );
+        }
+        window.addEventListener('load', lookForOKApp);
+        document.addEventListener('DOMContentLoaded', lookForOKApp);
+    </script>
 	<script type="text/javascript">
 	/*	SWFObject v2.2 <http://code.google.com/p/swfobject/>
  is released under the MIT License <http://www.opensource.org/licenses/mit-license.php>
