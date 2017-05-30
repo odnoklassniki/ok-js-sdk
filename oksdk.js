@@ -358,6 +358,8 @@ var OKSDK = (function () {
 
     function widgetGroupAppPermissions(scope, returnUrl, options) {
         options = options || {};
+        options.groupId = options.groupId || state.groupId;
+
         OKSDK.Widgets.builds.askGroupAppPermissions.configure(
             OKSDK.Util.mergeObject(
                 options,
@@ -425,10 +427,6 @@ var OKSDK = (function () {
         var query = state.widgetServer +
             'dk?st.cmd=' + widget +
             '&st.app=' + state.app_id;
-
-        if (state.groupId) {
-            query += '&st.groupId=' + state.groupId;
-        }
 
         for (var i = 0; i < keys.length; i++) {
             var key = "st." + keys[i];
@@ -583,7 +581,6 @@ var OKSDK = (function () {
 
             var options = this.options;
             options.client_id = options.client_id || state.app_id;
-            options.groupId = options.groupId || state.groupId;
 
             var validatorRegister = this._validatorRegister;
 
@@ -956,7 +953,8 @@ var OKSDK = (function () {
                                 data.uiLayerName,
                                 JSON.stringify(options.attachment),
                                 options.status ? 'on' : 'off',
-                                options.platforms ? options.platforms.join(',') : ''
+                                options.platforms ? options.platforms.join(',') : '',
+                                options.groupId
                             ];
                         })
                         .withPopupAdapter(function (data, options) {
