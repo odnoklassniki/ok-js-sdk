@@ -6,8 +6,9 @@
         function lookForOKApp(e) {
             var date = new Date();
             console.log(e.type,
-                date.getSeconds() + ':' + date.getMilliseconds(),
-                'OKApp: ' + window.OKApp
+                '\n\tfrom connectStart: ' + (Date.now() - window.performance.timing.connectStart),
+                '\n\t' + date.getSeconds() + ':' + date.getMilliseconds(),
+                '\n\tOKApp: ' + window.OKApp
             );
         }
         window.addEventListener('load', lookForOKApp);
