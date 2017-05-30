@@ -11,6 +11,7 @@
                 '\n\tOKApp: ' + window.OKApp
             );
         }
+        window.addEventListener('pageshow', lookForOKApp);
         window.addEventListener('load', lookForOKApp);
         document.addEventListener('DOMContentLoaded', lookForOKApp);
     </script>
