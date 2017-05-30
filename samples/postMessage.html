@@ -3,9 +3,12 @@
     <meta charset="UTF-8">
     <title>OKSDK - postMessage </title>
     <script>
+        window.okapplog = {};
         Object.defineProperty(window, 'OKApp', {
             set: function (v) {
-                console.log('OKApp set at: ', Date.now());
+                var number = Date.now() - window.performance.timing.connectStart;
+                console.log('OKApp set at: ', number);
+                okapplog.propSet = number;
                 this.v = v;
             },
             get: function (v) {
@@ -15,16 +18,21 @@
 
         function lookForOKApp(e) {
             var date = new Date();
-            console.log(e.type,
-                '\n\tfrom connectStart: ' + (Date.now() - window.performance.timing.connectStart),
-                '\n\t' + date.getSeconds() + ':' + date.getMilliseconds(),
-                '\n\tOKApp: ' + window.OKApp
-            );
+            var result = ('at: ' + Date.now())
+                + ('\n\tfrom connectStart: ' + (Date.now() - window.performance.timing.connectStart))
+                + ('\n\t' + date.getSeconds() + ':' + date.getMilliseconds())
+                + ('\n\tOKApp: ' + window.OKApp);
+            console.log(e.type, result);
+            window.okapplog[e.type] = result;
         }
         window.addEventListener('pageshow', lookForOKApp);
         window.addEventListener('load', lookForOKApp);
         document.addEventListener('DOMContentLoaded', lookForOKApp);
-        window.watch && window.watch('OKApp', window);
+
+        function getOkLog() {
+            return window.okapplog;
+        }
+
     </script>
 	<script type="text/javascript">
 	/*	SWFObject v2.2 <http://code.google.com/p/swfobject/>
