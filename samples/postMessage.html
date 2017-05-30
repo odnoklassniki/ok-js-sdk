@@ -634,7 +634,7 @@ var MD5 = (function () {
 function initFapi() {
 var rParams = FAPI.Util.getRequestParameters();
 // TODO: dmitrylapynov: workaround till we know protocol about native calls;
-rParams.web_server = "*";
+rParams['location_search']["web_server"] = "*";
 FAPI.init(rParams,
           /*
           * Первый параметр:
