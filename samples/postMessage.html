@@ -633,7 +633,9 @@ var MD5 = (function () {
 <script type="text/javascript">
 function initFapi() {
 var rParams = FAPI.Util.getRequestParameters();
-FAPI.init(rParams["api_server"], rParams["apiconnection"],
+// TODO: dmitrylapynov: workaround till we know protocol about native calls;
+rParams.webServerUrl = "*";
+FAPI.init(rParams,
           /*
           * Первый параметр:
           * функция, которая будет вызвана после успешной инициализации.
