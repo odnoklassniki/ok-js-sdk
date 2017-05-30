@@ -116,7 +116,7 @@ var FAPI = {
             // this cannot be used here, as function is directly attached to window
             var args = event.data.split("$");
 
-            if (args.length != 3 || FAPI.HTML5.webServerUrl != event.origin) {
+            if (args.length != 3 || !FAPI.HTML5.webServerUrl.match(/http[s]?:\/\/\*/) || FAPI.HTML5.webServerUrl != event.origin) {
                 // Not our message
                 return;
             }
