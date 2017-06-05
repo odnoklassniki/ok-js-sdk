@@ -365,8 +365,12 @@ var OKSDK = (function () {
                 options,
                 {
                     scope: (getClass(scope) == '[object Array]' ? scope.join(';') : scope),
-                    // TODO: dmitrylapynov: unify to 'return';
-                    return_uri: returnUrl
+                    // TODO: dmitrylapynov: unify param name as 'return_uri -> return';
+                    return_uri: returnUrl,
+                    popupConfig: {
+                        width: 600,
+                        height: 300
+                    }
                 },
                 false
             )
