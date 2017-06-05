@@ -365,7 +365,8 @@ var OKSDK = (function () {
                 options,
                 {
                     scope: (getClass(scope) == '[object Array]' ? scope.join(';') : scope),
-                    return: returnUrl
+                    // TODO: dmitrylapynov: unify to 'return';
+                    return_uri: returnUrl
                 },
                 false
             )
