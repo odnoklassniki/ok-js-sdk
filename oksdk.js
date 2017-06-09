@@ -552,8 +552,14 @@ var OKSDK = (function () {
                 return true;
             }
         },
+
         /**
          * @private
+         *
+         * @param {Object} methodMap    see: WidgetLayerBuilder.widgetInterface
+         * @param {Function} methodMap.openPopup
+         * @param {Function} methodMap.openUiLayer
+         * @param {Function} methodMap.openIframeLayer
          */
         _createMethodSuppliers: function (methodMap) {
             var result = {};
@@ -975,7 +981,7 @@ var OKSDK = (function () {
                         })
                 ),
                 suggest: new WidgetLayerBuilder('WidgetSuggest'),
-                askGroupAppPermissions: new WidgetLayerBuilder('WidgetGroupAppPermissions')
+                askGroupAppPermissions: new WidgetLayerBuilder('WidgetGroupAppPermissions', { groupId: state.groupId })
             },
             getBackButtonHtml: widgetBackButton,
             post: widgetMediatopicPost,
