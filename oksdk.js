@@ -953,6 +953,44 @@ var OKSDK = (function () {
 
     // ---------------------------------------------------------------------------------------------------
 
+
+
+    // ---------------------------------------------------------------------------------------------------
+    // Widget configurations
+    // ---------------------------------------------------------------------------------------------------
+
+    var widgetConfigs = {
+        groupPermission: new WidgetConfigurator('WidgetGroupAppPermissions')
+            .withConfigAdapter(function (state) {
+                var groupId = this.options.groupId;
+                if (!groupId) {
+                    this.options.groupId = state.groupId;
+                }
+            }),
+        post: new WidgetConfigurator('WidgetMediatopicPost')
+            .withUiLayerName('postMediatopic')
+            .withUiAdapter(function (data, options) {
+                return [
+                    data.uiLayerName,
+                    JSON.stringify(options.attachment),
+                    options.status ? 'on' : 'off',
+                    options.platforms ? options.platforms.join(',') : '',
+                    options.groupId
+                ];
+            })
+            .withPopupAdapter(function (data, options) {
+                options.attachment = btoa(unescape(encodeURIComponent(toString(options.attachment))));
+                return options;
+            }),
+        invite: new WidgetConfigurator('WidgetInvite')
+            .withUiLayerName('showInvite')
+            .withUiAdapter(function (data, options) {
+                return [data.uiLayerName, options.text, options.params, options.uids];
+            })
+    };
+
+    // ---------------------------------------------------------------------------------------------------
+
     return {
         init: init,
         REST: {
@@ -965,41 +1003,16 @@ var OKSDK = (function () {
         Widgets: {
             Builder: WidgetLayerBuilder,
             WidgetConfigurator: WidgetConfigurator,
+            configs: {
+                groupPermission: widgetConfigs.groupPermission,
+                post: widgetConfigs.post,
+                invite: widgetConfigs.invite
+            },
             builds: {
-                post: new WidgetLayerBuilder(
-                    new WidgetConfigurator('WidgetMediatopicPost')
-                        .withUiLayerName('postMediatopic')
-                        .withUiAdapter(function (data, options) {
-                            return [
-                                data.uiLayerName,
-                                JSON.stringify(options.attachment),
-                                options.status ? 'on' : 'off',
-                                options.platforms ? options.platforms.join(',') : '',
-                                options.groupId
-                            ];
-                        })
-                        .withPopupAdapter(function (data, options) {
-                            options.attachment = btoa(unescape(encodeURIComponent(toString(options.attachment))));
-                            return options;
-                        })
-                ),
-                invite: new WidgetLayerBuilder(
-                    new WidgetConfigurator('WidgetInvite')
-                        .withUiLayerName('showInvite')
-                        .withUiAdapter(function (data, options) {
-                            return [data.uiLayerName, options.text, options.params, options.uids];
-                        })
-                ),
+                post: new WidgetLayerBuilder(widgetConfigs.post),
+                invite: new WidgetLayerBuilder(widgetConfigs.invite),
                 suggest: new WidgetLayerBuilder('WidgetSuggest'),
-                askGroupAppPermissions: new WidgetLayerBuilder(
-                    new WidgetConfigurator('WidgetGroupAppPermissions')
-                        .withConfigAdapter(function (state) {
-                            var groupId = this.options.groupId;
-                            if (!groupId) {
-                                this.options.groupId = state.groupId;
-                            }
-                        })
-                )
+                askGroupAppPermissions: new WidgetLayerBuilder(widgetConfigs.groupPermission)
             },
             getBackButtonHtml: widgetBackButton,
             post: widgetMediatopicPost,
