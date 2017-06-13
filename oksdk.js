@@ -457,10 +457,15 @@ var OKSDK = (function () {
     // ---------------------------------------------------------------------------------------------------
 
 
+    /**
+     * @param {String} widgetName
+     * @constructor
+     */
     function WidgetConfigurator(widgetName) {
         this.name = widgetName;
+        this.configAdapter = nop;
         this.adapters = {};
-        this.uiLayerName = null;
+        this.validators = {};
     }
 
     WidgetConfigurator.prototype = {
@@ -471,6 +476,10 @@ var OKSDK = (function () {
         },
         withValidators: function (validators) {
             this.validators = validators;
+            return this;
+        },
+        withConfigAdapter: function (adapterFn) {
+            this.configAdapter = adapterFn;
             return this;
         },
         withAdapters: function (adapters) {
@@ -510,21 +519,28 @@ var OKSDK = (function () {
         }
     };
 
+    /**
+     *
+     * @param {WidgetConfigurator | String} widget
+     * @param {Object} [options]
+     * @constructor
+     */
     function WidgetLayerBuilder(widget, options) {
         if (widget instanceof WidgetConfigurator === false) {
             widget = new WidgetConfigurator(widget);
         }
 
+        this.widgetConf = widget;
         this.widgetName = widget.name;
-        this.handlerConf = widget;
         this.options = options || {};
+        this._configAdapter = this.widgetConf.configAdapter;
 
-        var adapters = this.handlerConf.adapters;
+        var adapters = this.widgetConf.adapters;
         if (adapters) {
             this.adapters = this._createMethodSuppliers(adapters);
         }
 
-        var validators = this.handlerConf.validators;
+        var validators = this.widgetConf.validators;
         if (validators) {
             this.validators = this._createMethodSuppliers(validators);
         }
@@ -539,11 +555,12 @@ var OKSDK = (function () {
         _callContext: {},
         /**
          * @private
+         * @description resolve when method is allowed to use relate to application envinronment context
          */
         _validatorRegister: {
             openUiLayer: function () {
                 var context = this._callContext;
-                return this.handlerConf.uiLayerName && !(context.isExternal || context.isMob);
+                return this.widgetConf.uiLayerName && !(context.isExternal || context.isMob);
             },
             openIframeLayer: function () {
                 return false;
@@ -593,8 +610,9 @@ var OKSDK = (function () {
             var options = this.options;
             options.client_id = options.client_id || state.app_id;
 
-            var validatorRegister = this._validatorRegister;
+            this._configAdapter(state);
 
+            var validatorRegister = this._validatorRegister;
             for (var method in validatorRegister) {
                 var result = validatorRegister[method].call(this);
                 var customValidators = this.validators;
@@ -604,7 +622,7 @@ var OKSDK = (function () {
                 if (result && (!this.hasOwnProperty(method) && method in this)) {
                     var adapter = this.adapters[method];
                     if (adapter) {
-                        this.options = adapter(this.handlerConf, options);
+                        this.options = adapter(this.widgetConf, options);
                     }
                     return this[method]();
                 }
@@ -857,28 +875,28 @@ var OKSDK = (function () {
 
     /**
      *
-     * @param oldObj {Object}    obj where copy to
-     * @param newObj {Object}    obj where copied from
+     * @param receiver {Object}    obj where copy to
+     * @param donor {Object}    obj where copied from
      * @param [rewrite=true] {boolean}
      * @returns {*}
      */
-    function mergeObject(oldObj, newObj, rewrite) {
-        if (getClass(newObj) == getClass._object && getClass(oldObj) == getClass._object) {
-            for (var k in newObj) {
-                if (newObj.hasOwnProperty(k)) {
-                    if (oldObj.hasOwnProperty(k) && typeof rewrite !== 'undefined' && !rewrite) {
+    function mergeObject(receiver, donor, rewrite) {
+        if (getClass(donor) == getClass._object && getClass(receiver) == getClass._object) {
+            for (var k in donor) {
+                if (donor.hasOwnProperty(k)) {
+                    if (receiver.hasOwnProperty(k) && typeof rewrite !== 'undefined' && !rewrite) {
                         continue;
                     }
-                    var property = newObj[k];
+                    var property = donor[k];
                     if (getClass(property) == getClass._object) {
-                        mergeObject(oldObj[k] = oldObj[k] || {}, property, rewrite);
+                        mergeObject(receiver[k] = receiver[k] || {}, property, rewrite);
                     } else {
-                        oldObj[k] = property;
+                        receiver[k] = property;
                     }
                 }
             }
 
-            return oldObj;
+            return receiver;
         }
 
         return new Error('Merged elements should be an objects');
@@ -981,7 +999,15 @@ var OKSDK = (function () {
                         })
                 ),
                 suggest: new WidgetLayerBuilder('WidgetSuggest'),
-                askGroupAppPermissions: new WidgetLayerBuilder('WidgetGroupAppPermissions', { groupId: state.groupId })
+                askGroupAppPermissions: new WidgetLayerBuilder(
+                    new WidgetConfigurator('WidgetMediatopicPost')
+                        .withConfigAdapter(function (state) {
+                            var groupId = this.options.groupId;
+                            if (!groupId) {
+                                this.options.groupId = state.groupId;
+                            }
+                        })
+                )
             },
             getBackButtonHtml: widgetBackButton,
             post: widgetMediatopicPost,
