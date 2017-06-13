@@ -607,8 +607,9 @@ var OKSDK = (function () {
             var validatorRegister = this._validatorRegister;
             for (var method in validatorRegister) {
                 var result = validatorRegister[method].call(this);
-                var customValidators = this.validators;
-                result = customValidators ? customValidators[method].call(this) : result;
+                if (this.validators[method]) {
+                    result = this.validators[method].call(this);
+                }
 
                 // убеждаемся, что такой метод есть в прототипе конструтора
                 if (result && (!this.hasOwnProperty(method) && method in this)) {
