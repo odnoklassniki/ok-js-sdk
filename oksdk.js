@@ -465,7 +465,6 @@ var OKSDK = (function () {
         this.name = widgetName;
         this.configAdapter = nop;
         this.adapters = {};
-        this.validators = {};
     }
 
     WidgetConfigurator.prototype = {
@@ -533,18 +532,9 @@ var OKSDK = (function () {
         this.widgetConf = widget;
         this.widgetName = widget.name;
         this.options = options || {};
-        this._configAdapter = this.widgetConf.configAdapter;
-
-        var adapters = this.widgetConf.adapters;
-        if (adapters) {
-            this.adapters = this._createMethodSuppliers(adapters);
-        }
-
-        var validators = this.widgetConf.validators;
-        if (validators) {
-            this.validators = this._createMethodSuppliers(validators);
-        }
-
+        this.configAdapter = this.widgetConf.configAdapter;
+        this.adapters = this._createMethodSuppliers(this.widgetConf.adapters);
+        this.validators = this._createMethodSuppliers(this.widgetConf.validators);
         this._callContext = resolveContext();
     }
 
@@ -580,11 +570,13 @@ var OKSDK = (function () {
          */
         _createMethodSuppliers: function (methodMap) {
             var result = {};
-            var widgetInterface = this.widgetInterface;
-            for (var i = 0, l = widgetInterface.length; i < l; i++) {
-                var m = widgetInterface[i];
-                if (methodMap.hasOwnProperty(m)) {
-                    result[m] = methodMap[m];
+            if (methodMap) {
+                var widgetInterface = this.widgetInterface;
+                for (var i = 0, l = widgetInterface.length; i < l; i++) {
+                    var m = widgetInterface[i];
+                    if (methodMap.hasOwnProperty(m)) {
+                        result[m] = methodMap[m];
+                    }
                 }
             }
 
@@ -610,7 +602,7 @@ var OKSDK = (function () {
             var options = this.options;
             options.client_id = options.client_id || state.app_id;
 
-            this._configAdapter(state);
+            this.configAdapter(state);
 
             var validatorRegister = this._validatorRegister;
             for (var method in validatorRegister) {
