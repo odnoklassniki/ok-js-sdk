@@ -993,7 +993,7 @@ var OKSDK = (function () {
                 ),
                 suggest: new WidgetLayerBuilder('WidgetSuggest'),
                 askGroupAppPermissions: new WidgetLayerBuilder(
-                    new WidgetConfigurator('WidgetMediatopicPost')
+                    new WidgetConfigurator('WidgetGroupAppPermissions')
                         .withConfigAdapter(function (state) {
                             var groupId = this.options.groupId;
                             if (!groupId) {
