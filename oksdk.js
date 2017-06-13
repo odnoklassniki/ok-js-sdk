@@ -530,7 +530,6 @@ var OKSDK = (function () {
         }
 
         this.widgetConf = widget;
-        this.widgetName = widget.name;
         this.options = options || {};
         this.configAdapter = this.widgetConf.configAdapter;
         this.adapters = this._createMethodSuppliers(this.widgetConf.adapters);
@@ -589,7 +588,7 @@ var OKSDK = (function () {
                 'openIframeLayer'
             ],
         openPopup: function () {
-            return widgetOpen(this.widgetName, this.options);
+            return widgetOpen(this.widgetConf.name, this.options);
         },
         openUiLayer: function () {
             return invokeUIMethod.apply(null, this.options);
