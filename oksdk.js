@@ -346,14 +346,24 @@ var OKSDK = (function () {
      *
      * @param {String} returnUrl callback url
      * @param {Object} [options] options
+     * @param {boolean} forcePopup  fallback for old method to open widget
      * @param {int} [options.autosel] amount of friends to be preselected
      * @param {String} [options.comment] default text set in the suggestion text field
      * @param {String} [options.custom_args] custom args to be passed when app opened from suggestion
      * @param {String} [options.state] custom args to be passed to return url
      * @param {String} [options.target] comma-separated friend IDs that should be preselected by default
      */
-    function widgetSuggest(returnUrl, options) {
-        widgetOpen('WidgetSuggest', options, returnUrl);
+    function widgetSuggest(returnUrl, options, forcePopup) {
+        if (forcePopup) {
+            widgetOpen('WidgetSuggest', options, returnUrl);
+        } else {
+            OKSDK.Widgets.builds.suggest.configure(
+                OKSDK.Util.mergeObject(
+                    options,
+                    {return: returnUrl}
+                )
+            ).run();
+        }
     }
 
     function widgetGroupAppPermissions(scope, returnUrl, options) {
