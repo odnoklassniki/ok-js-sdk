@@ -609,10 +609,10 @@ var OKSDK = (function () {
             return window.console && console.log('Iframe-layer is in development');
         },
         run: function () {
-
             var options = this.options;
             options.client_id = options.client_id || state.app_id;
-
+            // TODO: make state update to be optional;
+            this._callContext = resolveContext();
             this.configAdapter(state);
 
             var validatorRegister = this._validatorRegister;
@@ -700,7 +700,7 @@ var OKSDK = (function () {
             isOKApp: state.container || false,
             isOAuth: stateMode === 'o',
             isIframe: window.parent !== window,
-            isPopup: !!window.opener
+            isPopup: window.opener !== window
         };
         context.isExternal = context.layout == EXTERNAL || !(context.isIframe || context.isPopup || context.isOAuth);
         context.isMob = context.layout === MOBILE || context.layout === NATIVE_APP;
