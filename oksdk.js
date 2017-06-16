@@ -73,9 +73,9 @@ var OKSDK = (function () {
         state.container = params['container'];
         state.layout = (params['layout'] || hParams['layout'])
             || (params['api_server']
-                ? (params['apiconnection']
-                    ? 'w'
-                    : 'm')
+                ? (params['mob']
+                    ? 'm'
+                    : 'w')
                 : args.layout);
 
         if (!params['api_server']) {
@@ -428,7 +428,7 @@ var OKSDK = (function () {
             popup = window.open(getLinkOnWidget(widget, args));
         }
 
-        window.console && console.log('popup', popup);
+        //window.console && console.log('popup', popup);
 
         return popup;
     }
