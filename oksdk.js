@@ -71,12 +71,12 @@ var OKSDK = (function () {
         state.baseUrl = state.apiServer + "fb.do";
         state.header_widget = params['header_widget'];
         state.container = params['container'];
-        state.layout = (params['layout'] || hParams['layout'])
-            || (params['api_server']
-                ? (params['mob']
+        state.layout = (params['layout'] || hParams['layout'] || args.layout)
+            || params['api_server']
+                ? params['mob'] && params['mob'] === 'true'
                     ? 'm'
-                    : 'w')
-                : args.layout);
+                    : 'w'
+                : 'w';
 
         if (!params['api_server']) {
             if ((hParams['access_token'] == null) && (hParams['error'] == null)) {
