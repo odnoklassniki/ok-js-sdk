@@ -367,9 +367,6 @@ var OKSDK = (function () {
     }
 
     function widgetGroupAppPermissions(scope, returnUrl, options) {
-
-        return widgetOpen('WidgetGroupAppPermissions', {groupId: appConf.group_id}, DOMAIN + '/return.html');
-
         options = options || {};
         options.groupId = options.groupId || state.groupId;
 
