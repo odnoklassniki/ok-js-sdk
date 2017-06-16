@@ -703,7 +703,7 @@ var OKSDK = (function () {
             isPopup: !!window.opener
         };
         context.isExternal = context.layout == EXTERNAL || !(context.isIframe || context.isPopup || context.isOAuth);
-        context.isMob = context.layout == WEB || context.layout == NATIVE_APP;
+        context.isMob = context.layout === MOBILE || context.layout === NATIVE_APP;
         return context;
     }
 
