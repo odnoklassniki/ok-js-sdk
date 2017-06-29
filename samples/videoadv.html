@@ -18,7 +18,35 @@
     }
 </style>
 <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.9-1/crypto-js.min.js"></script>
+<script type="text/javascript" src="https://api.ok.ru/js/fapi5.js"></script>
 <script type="text/javascript">
+    window.addEventListener('load',function() {
+    var standalone = (window.parent == window);
+    if(!standalone) {
+	   window.API_callback = function() {console.log(arguments);alert(argmuments);};
+       FAPI.init();
+    } else {
+        var res = {};
+    var url = window.location.search;
+    if (url) {
+        url = url.substr(1);    // Drop the leading '?' / '#'
+        var nameValues = url.split("&");
+
+        for (var i = 0; i < nameValues.length; i++) {
+            var nameValue = nameValues[i].split("=");
+            var name = nameValue[0];
+            var value = nameValue[1];
+            value = decodeURIComponent(value.replace(/\+/g, " "));
+            res[name] = value;
+        }
+    }
+    _('sessionKey',res['session_key']);
+    _('sessionSecretKey',res['session_secret_key']);
+    _('appId',res['app_id']);
+    _('connect',res['connect']);
+    console.log(res);
+    }
+
     function _(id, value) {
         if (value) {
             document.getElementById(id).value = value;
@@ -54,9 +82,12 @@
         frame.style.display = 'none';
         document.body.appendChild(frame);
     }
+    document.getElementsByClassName(standalone?'mobile':'portal')[0].style.display=''; 
+});
 </script>
 <body>
 <h1>Hello world!!!</h1>
+<div class="mobile" style="display:none">
 Application Id: <input type="text" id="appId" value=""> <br/>
 Connect: <input type="text" id="connect" value=""> <br/>
 Session Key: <input type="text" id="sessionKey" value="">
@@ -67,27 +98,12 @@ Session Secret Key: <input type="text" id="sessionSecretKey" value=""> <br/>
 <input type="submit" value="prepare preroll" onclick="prepare('preroll')">
 <input type="submit" value="show" onclick="show()">
 <br/>
+</div>
+<div class="portal" style="display:none">
+    <input type="submit" value="show preroll" onclick="FAPI.invokeUIMethod('showPreroll')">
+    <input type="submit" value="prepare midroll" onclick="FAPI.invokeUIMethod('prepareMidroll')">
+<input type="submit" value="show midroll" onclick="FAPI.invokeUIMethod('showMidroll')">
 
-<script>
-    var res = {};
-    var url = window.location.search;
-    if (url) {
-        url = url.substr(1);    // Drop the leading '?' / '#'
-        var nameValues = url.split("&");
-
-        for (var i = 0; i < nameValues.length; i++) {
-            var nameValue = nameValues[i].split("=");
-            var name = nameValue[0];
-            var value = nameValue[1];
-            value = decodeURIComponent(value.replace(/\+/g, " "));
-            res[name] = value;
-        }
-    }
-    _('sessionKey',res['session_key']);
-    _('sessionSecretKey',res['session_secret_key']);
-    _('appId',res['app_id']);
-    _('connect',res['connect']);
-    console.log(res);
-</script>
+</div>
 </body>
 </html>
