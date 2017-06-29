@@ -49,7 +49,7 @@
     window.addEventListener('load',function() {
     var standalone = (window.parent == window);
     if(!standalone) {
-	   window.API_callback = function() {console.log(arguments);alert(argmuments);};
+	   window.API_callback = function() {console.log(arguments);alert(JSON.stringify(arguments));};
        FAPI.init();
     } else {
         var res = {};
