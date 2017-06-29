@@ -20,6 +20,32 @@
 <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.9-1/crypto-js.min.js"></script>
 <script type="text/javascript" src="https://api.ok.ru/js/fapi5.js"></script>
 <script type="text/javascript">
+    function _(id, value) {
+        if (value) {
+            document.getElementById(id).value = value;
+        }
+        return document.getElementById(id).value;
+    }
+   
+    function prepare(content) {
+        window.frames[0].postMessage(JSON.stringify({method: 'prepare', arguments: [content]}), '*');
+    }
+
+    function show() {
+        window.frames[0].postMessage(JSON.stringify({method: 'show'}), '*');
+        var style = document.getElementsByTagName('iframe')[0].style;
+        style.display = '';
+    }
+
+    function injectFrame() {
+        var frame = document.createElement('iframe');
+        var sig = CryptoJS.MD5("call_id=1" + _('sessionSecretKey')).toString();
+        frame.src = _('connect') + "/dk?st.cmd=WidgetVideoAdv&st.app=" + _('appId') + "&st.sig=" + sig + "&st.call_id=1&st.session_key=" + _('sessionKey');
+        frame.style.display = 'none';
+        document.body.appendChild(frame);
+    }
+
+
     window.addEventListener('load',function() {
     var standalone = (window.parent == window);
     if(!standalone) {
@@ -59,30 +85,7 @@
     console.log(res);
     }
 
-    function _(id, value) {
-        if (value) {
-            document.getElementById(id).value = value;
-        }
-        return document.getElementById(id).value;
-    }
    
-    function prepare(content) {
-        window.frames[0].postMessage(JSON.stringify({method: 'prepare', arguments: [content]}), '*');
-    }
-
-    function show() {
-        window.frames[0].postMessage(JSON.stringify({method: 'show'}), '*');
-        var style = document.getElementsByTagName('iframe')[0].style;
-        style.display = '';
-    }
-
-    function injectFrame() {
-        var frame = document.createElement('iframe');
-        var sig = CryptoJS.MD5("call_id=1" + _('sessionSecretKey')).toString();
-        frame.src = _('connect') + "/dk?st.cmd=WidgetVideoAdv&st.app=" + _('appId') + "&st.sig=" + sig + "&st.call_id=1&st.session_key=" + _('sessionKey');
-        frame.style.display = 'none';
-        document.body.appendChild(frame);
-    }
     document.getElementsByClassName(standalone?'mobile':'portal')[0].style.display=''; 
 });
 </script>
