@@ -44,16 +44,7 @@
     _('sessionSecretKey',res['session_secret_key']);
     _('appId',res['app_id']);
     _('connect',res['connect']);
-    console.log(res);
-    }
-
-    function _(id, value) {
-        if (value) {
-            document.getElementById(id).value = value;
-        }
-        return document.getElementById(id).value;
-    }
-    window.addEventListener('message', function (e) {
+     window.addEventListener('message', function (e) {
         console.log(e.data);
         var o = JSON.parse(e.data);
         if (o.call.method === "init" && o.result.status === "ok") {
@@ -65,6 +56,16 @@
         }
         alert(e.data);
     });
+    console.log(res);
+    }
+
+    function _(id, value) {
+        if (value) {
+            document.getElementById(id).value = value;
+        }
+        return document.getElementById(id).value;
+    }
+   
     function prepare(content) {
         window.frames[0].postMessage(JSON.stringify({method: 'prepare', arguments: [content]}), '*');
     }
