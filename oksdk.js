@@ -15,6 +15,9 @@ var OKSDK = (function () {
         'n': NATIVE_APP,
         'e': EXTERNAL
     };
+
+    var APP_EXTLINK_REGEXP = /\bjs-sdk-extlink\b/;
+
     var state = {
         app_id: 0, app_key: '',
         sessionKey: '', accessToken: '', sessionSecretKey: '', apiServer: '', widgetServer: '', mobServer: '',
@@ -906,6 +909,33 @@ var OKSDK = (function () {
         return new Error('Merged elements should be an objects');
     }
 
+    function processExternalLink(e) {
+        var target = e.target;
+        var href;
+        var tries = 5;
+
+        if (target) {
+            while (!isMarkedAsExternalLink(target) && tries) {
+                target = target.parentNode;
+                tries--;
+            }
+
+            href = target.href;
+
+            if (resolveContext().isOKApp && href) { // todo: check for app ctx
+                target.href = createExternalAppLink(href);
+            }
+        }
+    }
+
+    function isMarkedAsExternalLink(target) {
+        return target.className.match(APP_EXTLINK_REGEXP);
+    }
+
+    function createExternalAppLink(href) {
+        return '/apphook/outlink/' + href;
+    }
+
     function getClass(o) {
         return Object.prototype.toString.call(o);
     }
@@ -1041,7 +1071,19 @@ var OKSDK = (function () {
             getRequestParameters: getRequestParameters,
             toString: toString,
             resolveContext: resolveContext,
-            mergeObject: mergeObject
+            mergeObject: mergeObject,
+            initExternalLinkHandler: function (appHookClass) {
+                if (typeof appHookClass !== 'undefined' && appHookClass.indexOf('.') === -1) {
+                    APP_EXTLINK_REGEXP = new RegExp('\\b'+appHookClass+'\\b');
+                }
+                document.body.addEventListener('click', processExternalLink, false);
+            },
+            removeExternalLinkHandler: function () {
+                document.body.removeEventListener('click', processExternalLink, false);
+            },
+            openExternalAppLink: function (href) {
+                return location.assign(createExternalAppLink(href));
+            }
         }
     };
 })();
