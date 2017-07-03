@@ -1003,6 +1003,14 @@ var OKSDK = (function () {
 
     var widgetConfigs = {
         groupPermission: new WidgetConfigurator('WidgetGroupAppPermissions')
+            .withUiLayerName('showGroupPermissions')
+            .withUiAdapter(function (data, options) {
+                return [
+                    data.uiLayerName,
+                    options.scope,
+                    options.groupId
+                ];
+            })
             .withConfigAdapter(function (state) {
                 var groupId = this.options.groupId;
                 if (!groupId) {
