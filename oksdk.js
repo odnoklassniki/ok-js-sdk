@@ -16,7 +16,7 @@ var OKSDK = (function () {
         'e': EXTERNAL
     };
 
-    var APP_EXTLINK_REGEXP = /\bjs-sdk-extlink\b/;
+    var APP_EXTLINK_REGEXP = /\bjs-ok-extlink\b/;
 
     var state = {
         app_id: 0, app_key: '',
