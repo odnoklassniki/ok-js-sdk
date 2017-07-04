@@ -1048,25 +1048,6 @@ var OKSDK = (function () {
 
     return {
         init: init,
-        addExternalLinksListener: function (appHookClass, eventDecorator) {
-            if (!extLinkListenerOn) {
-                if (typeof appHookClass !== 'undefined' && appHookClass.indexOf('.') === -1) {
-                    APP_EXTLINK_REGEXP = new RegExp('\\b'+appHookClass+'\\b');
-                }
-
-                externalLinkHandler =  function (e) {
-                    var _event = eventDecorator ? eventDecorator(e) : e;
-                    processExternalLink(_event);
-                };
-
-                document.body.addEventListener('click', externalLinkHandler, false);
-                extLinkListenerOn = true;
-            }
-        },
-        removeExternalLinksListener: function () {
-            document.body.removeEventListener('click', externalLinkHandler, false);
-            extLinkListenerOn = false;
-        },
         REST: {
             call: restCall,
             calcSignature: calcSignatureExternal
@@ -1106,6 +1087,25 @@ var OKSDK = (function () {
             mergeObject: mergeObject,
             openExternalAppLink: function (href) {
                 return location.assign(createExternalAppLink(href));
+            },
+            addExternalLinksListener: function (appHookClass, eventDecorator) {
+                if (!extLinkListenerOn) {
+                    if (typeof appHookClass !== 'undefined' && appHookClass.indexOf('.') === -1) {
+                        APP_EXTLINK_REGEXP = new RegExp('\\b'+appHookClass+'\\b');
+                    }
+
+                    externalLinkHandler =  function (e) {
+                        var _event = eventDecorator ? eventDecorator(e) : e;
+                        processExternalLink(_event);
+                    };
+
+                    document.body.addEventListener('click', externalLinkHandler, false);
+                    extLinkListenerOn = true;
+                }
+            },
+            removeExternalLinksListener: function () {
+                document.body.removeEventListener('click', externalLinkHandler, false);
+                extLinkListenerOn = false;
             }
         }
     };
