@@ -28,6 +28,7 @@ var OKSDK = (function () {
     var sdk_success = nop;
     var sdk_failure = nop;
     var rest_counter = 0;
+    var extLinkListenerOn = false;
 
     // ---------------------------------------------------------------------------------------------------
     // General
@@ -1043,6 +1044,19 @@ var OKSDK = (function () {
 
     return {
         init: init,
+        addExternalLinksListener: function (appHookClass, eventDecorator) {
+            if (!extLinkListenerOn) {
+                if (typeof appHookClass !== 'undefined' && appHookClass.indexOf('.') === -1) {
+                    APP_EXTLINK_REGEXP = new RegExp('\\b'+appHookClass+'\\b');
+                }
+                document.body.addEventListener('click', function (e) {
+                    var _event = eventDecorator ? eventDecorator(e) : e;
+                    processExternalLink(_event);
+                }, false);
+
+                extLinkListenerOn = true;
+            }
+        },
         REST: {
             call: restCall,
             calcSignature: calcSignatureExternal
@@ -1080,7 +1094,7 @@ var OKSDK = (function () {
             toString: toString,
             resolveContext: resolveContext,
             mergeObject: mergeObject,
-            initExternalLinkHandler: function (appHookClass) {
+            addExternalLinksListener: function (appHookClass) {
                 if (typeof appHookClass !== 'undefined' && appHookClass.indexOf('.') === -1) {
                     APP_EXTLINK_REGEXP = new RegExp('\\b'+appHookClass+'\\b');
                 }
@@ -1088,6 +1102,7 @@ var OKSDK = (function () {
             },
             removeExternalLinkHandler: function () {
                 document.body.removeEventListener('click', processExternalLink, false);
+                extLinkListenerOn = false;
             },
             openExternalAppLink: function (href) {
                 return location.assign(createExternalAppLink(href));
