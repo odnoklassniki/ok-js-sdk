@@ -923,7 +923,7 @@ var OKSDK = (function () {
         var tries = 5;
 
         if (target) {
-            while (!isMarkedAsExternalLink(target) && tries) {
+            while (target.className && !isMarkedAsExternalLink(target) && tries) {
                 target = target.parentNode;
                 tries--;
             }
