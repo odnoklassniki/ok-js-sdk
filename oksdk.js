@@ -921,13 +921,15 @@ var OKSDK = (function () {
         var target = e.target;
         var href;
         var tries = 5;
+        var isValidTarget = isValidOutlinkTarget(target);
 
-        if (target) {
-            while (target.className && !isMarkedAsExternalLink(target) && tries) {
-                target = target.parentNode;
-                tries--;
-            }
+        while (!isValidTarget && tries) {
+            target = target.parentNode;
+            isValidTarget = isValidOutlinkTarget(target);
+            tries--;
+        }
 
+        if (isValidTarget) {
             href = target.href;
             if (href) {
                 target.href = createAppExternalLink(href);
@@ -935,8 +937,8 @@ var OKSDK = (function () {
         }
     }
 
-    function isMarkedAsExternalLink(target) {
-        return target.className.match(APP_EXTLINK_REGEXP);
+    function isValidOutlinkTarget(target) {
+        return target && target.className && target.className.match(APP_EXTLINK_REGEXP);
     }
 
     function createAppExternalLink(href) {
