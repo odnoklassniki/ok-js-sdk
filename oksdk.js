@@ -1091,11 +1091,11 @@ var OKSDK = (function () {
             toString: toString,
             resolveContext: resolveContext,
             mergeObject: mergeObject,
-            openAppExternalLink: function (href, inParent) {
-                if (inParent === true) {
-                    return location.assign(createAppExternalLink(href));
+            openAppExternalLink: function (href, useSameFrame) {
+                if (useSameFrame === true) {
+                    return location.assign(href);
                 }
-                return window.open(href);
+                return window.open(createAppExternalLink(href));
             },
             addExternalLinksListener: function (appHookClass, eventDecorator) {
                 if (!extLinkListenerOn) {
