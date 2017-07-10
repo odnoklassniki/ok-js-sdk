@@ -706,12 +706,19 @@ var OKSDK = (function () {
      */
     function resolveContext() {
         var stateMode = state.layout && state.layout.toLowerCase();
+        var userAgent = navigator.userAgent.toLowerCase();
+        var IOS_UA_REG = /(iphone|ipad|ipod)/g;
+        var ANDROID_UA_REG = /android/g;
+        var WP_UA_REG = /windows phone/g;
         var context = {
             layout: PLATFORM_REGISTER[stateMode],
             isOKApp: state.container,
             isOAuth: stateMode === 'o',
             isIframe: window.parent !== window,
-            isPopup: window.opener !== window
+            isPopup: window.opener !== window,
+            isAndroid: ANDROID_UA_REG.test(userAgent),
+            isIOS: IOS_UA_REG.test(userAgent),
+            isWP: WP_UA_REG.test(userAgent)
         };
         context.isExternal = context.layout == EXTERNAL || !(context.isIframe || context.isPopup || context.isOAuth);
         context.isMob = context.layout === MOBILE || context.layout === NATIVE_APP;
@@ -942,8 +949,9 @@ var OKSDK = (function () {
     }
 
     function createAppExternalLink(href) {
-        if (resolveContext().isOKApp) {
-            return '/apphook/outlink/' + href;
+        var context = resolveContext();
+        if (context.isOKApp) {
+            return (context.isIOS ? 'apphook:outlink:' : '/apphook/outlink?url=') + href;
         }
 
         return href;
