@@ -939,6 +939,7 @@ var OKSDK = (function () {
         if (isValidTarget) {
             href = target.href;
             if (href) {
+                target.setAttribute('target', '_self');
                 target.href = createAppExternalLink(href);
             }
         }
