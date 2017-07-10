@@ -708,7 +708,7 @@ var OKSDK = (function () {
         var stateMode = state.layout && state.layout.toLowerCase();
         var context = {
             layout: PLATFORM_REGISTER[stateMode],
-            isOKApp: state.container || false,
+            isOKApp: state.container,
             isOAuth: stateMode === 'o',
             isIframe: window.parent !== window,
             isPopup: window.opener !== window
