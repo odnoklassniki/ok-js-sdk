@@ -281,7 +281,7 @@ var OKSDK = (function () {
     /**
      * Opens mediatopic post widget
      *
-     * @param {String} returnUrl callback url
+     * @param {String} returnUrl callback url (if null, result will be posted via postmessage and popup closed)
      * @param {Object} options options
      * @param {Object} options.attachment mediatopic (feed) to be posted
      */
@@ -306,7 +306,7 @@ var OKSDK = (function () {
     /**
      * Opens app suggest widget (suggest app to friends, both already playing and not yet)
      *
-     * @param {String} returnUrl callback url
+     * @param {String} returnUrl callback url (if null, result will be posted via postmessage and popup closed)
      * @param {Object} [options] options
      * @param {int} [options.autosel] amount of friends to be preselected
      * @param {String} [options.comment] default text set in the suggestion text field
@@ -320,7 +320,9 @@ var OKSDK = (function () {
 
     function widgetOpen(widget, args, returnUrl) {
         args = args || {};
-        args.return = returnUrl;
+        if (returnUrl !== null) {
+            args.return = returnUrl;
+        }
 
         var keys = [];
         for (var arg in args) {
