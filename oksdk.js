@@ -947,7 +947,7 @@ var OKSDK = (function () {
             if (state.context || resolveContext()) {
                 if (state.context.isOKApp) {
                     target.removeAttribute('target');
-                } else if (state.isIframe) {
+                } else if (state.context.isIframe) {
                     target.setAttribute('target', '_blank');
                 }
             }
