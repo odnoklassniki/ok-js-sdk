@@ -54,7 +54,7 @@ var OKSDK = (function () {
         args.oauth = args.oauth || {};
 
         if (args.use_extlinks) {
-            OKSDK.Util.addExternalLinksListener();
+            OKSDK.Util.addExternalLinksListener(args.use_extlinks.customClass, args.use_extlinks.decorator);
         } else {
             OKSDK.Util.removeExternalLinksListener();
         }
@@ -935,11 +935,10 @@ var OKSDK = (function () {
         var target = e.target;
         var href;
         var tries = 5;
-        var isValidTarget = isValidOutlinkTarget(target);
+        var isValidTarget = isHandledExtlink(target);
 
         while (!isValidTarget && tries) {
-            target = target.parentNode;
-            isValidTarget = isValidOutlinkTarget(target);
+            isValidTarget = isHandledExtlink(target = target.parentNode);
             tries--;
         }
 
@@ -959,14 +958,16 @@ var OKSDK = (function () {
         }
     }
 
-    function isValidOutlinkTarget(target) {
-        return target && target.className && target.className.match(APP_EXTLINK_REGEXP);
+    function isHandledExtlink(target) {
+        return target
+            && target.tagName.toLowerCase() === 'a'
+            && target.className
+            && target.className.match(APP_EXTLINK_REGEXP);
     }
 
     function createAppExternalLink(href) {
-        var context = resolveContext();
-        if (context.isOKApp) {
-            return (context.isIOS ? 'apphook:applink:' : 'https://ok.ru/apphook/outlink?url=') + href;
+        if (state.context.isOKApp) {
+            return (state.context.isIOS ? 'apphook:applink:' : 'https://ok.ru/apphook/outlink?url=') + href;
         }
 
         return href;
@@ -1120,7 +1121,8 @@ var OKSDK = (function () {
                 if (useSameFrame === true) {
                     return location.assign(href);
                 }
-                return window.open(createAppExternalLink(href));
+                //return window.open(createAppExternalLink(href));
+                return location.assign(createAppExternalLink(href));
             },
             addExternalLinksListener: function (appHookClass, eventDecorator) {
                 if (!extLinkListenerOn) {
