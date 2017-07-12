@@ -712,7 +712,7 @@ var OKSDK = (function () {
         var WP_UA_REG = /windows phone/g;
         var context = {
             layout: PLATFORM_REGISTER[stateMode],
-            isOKApp: state.container,
+            isOKApp: Boolean(state.container),
             isOAuth: stateMode === 'o',
             isIframe: window.parent !== window,
             isPopup: window.opener !== window,
@@ -939,7 +939,8 @@ var OKSDK = (function () {
         if (isValidTarget) {
             href = target.href;
             if (href) {
-                target.setAttribute('target', '_blank');
+                //target.setAttribute('target', '_blank');
+                target.removeAttribute('target');
                 target.href = createAppExternalLink(href);
             }
         }
