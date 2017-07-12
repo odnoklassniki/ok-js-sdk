@@ -1117,12 +1117,15 @@ var OKSDK = (function () {
             toString: toString,
             resolveContext: resolveContext,
             mergeObject: mergeObject,
-            openAppExternalLink: function (href, useSameFrame) {
-                if (useSameFrame === true) {
-                    return location.assign(href);
+            openAppExternalLink: function (href) {
+                var context = state.context;
+                if (context || resolveContext) {
+                    if (context.isIframe) {
+                        return window.open(createAppExternalLink(href));
+                    } else if (context.isOKApp) {
+                        return location.assign(createAppExternalLink(href));
+                    }
                 }
-                //return window.open(createAppExternalLink(href));
-                return location.assign(createAppExternalLink(href));
             },
             addExternalLinksListener: function (appHookClass, eventDecorator) {
                 if (!extLinkListenerOn) {
