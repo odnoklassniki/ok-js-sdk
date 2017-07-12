@@ -952,7 +952,7 @@ var OKSDK = (function () {
     function createAppExternalLink(href) {
         var context = resolveContext();
         if (context.isOKApp) {
-            return (context.isIOS ? 'apphook:outlink:' : 'https://ok.ru/apphook/outlink?url=') + href;
+            return (context.isIOS ? 'apphook:applink:' : 'https://ok.ru/apphook/outlink?url=') + href;
         }
 
         return href;
