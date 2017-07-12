@@ -940,7 +940,7 @@ var OKSDK = (function () {
             href = target.href;
             if (href) {
                 //target.setAttribute('target', '_blank');
-                target.removeAttribute('target');
+                //target.removeAttribute('target');
                 target.href = createAppExternalLink(href);
             }
         }
