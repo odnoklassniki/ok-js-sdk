@@ -935,9 +935,10 @@ var OKSDK = (function () {
         var target = e.target;
         var href;
         var tries = 5;
+
         var isValidTarget = isHandledExtlink(target);
 
-        while (!isValidTarget && tries) {
+        while (!isValidTarget && target && tries) {
             isValidTarget = isHandledExtlink(target = target.parentNode);
             tries--;
         }
@@ -956,13 +957,13 @@ var OKSDK = (function () {
                 target.href = createAppExternalLink(href);
             }
         }
+
     }
 
     function isHandledExtlink(target) {
         return target
-            && target.tagName.toLowerCase() === 'a'
-            && target.className
-            && target.className.match(APP_EXTLINK_REGEXP);
+            && (target.tagName && target.tagName.toLowerCase() === 'a')
+            && (target.className && target.className.match(APP_EXTLINK_REGEXP));
     }
 
     function createAppExternalLink(href) {
