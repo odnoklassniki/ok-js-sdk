@@ -720,8 +720,8 @@ var OKSDK = (function () {
             layout: PLATFORM_REGISTER[stateMode],
             isOKApp: Boolean(state.container),
             isOAuth: stateMode === 'o',
-            isIframe: window.parent !== window,
-            isPopup: window.opener !== window,
+            isIframe: window.parent && window.parent !== window,
+            isPopup: window.opener && window.opener !== window,
             isAndroid: ANDROID_UA_REG.test(userAgent),
             isIOS: IOS_UA_REG.test(userAgent),
             isWP: WP_UA_REG.test(userAgent)
