@@ -409,7 +409,8 @@ var OKSDK = (function () {
         args.return = args.return || returnUrl || args.redirect_uri;
         var popupConfig = args.popupConfig;
         var popup;
-        var popupName = "OK-" + Date.now();
+        //var popupName = "OK-" + Date.now();
+        var popupName;
 
         if (popupConfig) {
             delete args.popupConfig;
