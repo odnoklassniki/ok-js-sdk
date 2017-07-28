@@ -388,25 +388,27 @@ var OKSDK = (function () {
         options.groupId = options.groupId || state.groupId;
         scope = getInnerType(scope) == getInnerType._array ? scope.join(';') : scope;
 
-        OKSDK.Widgets.builds.askGroupAppPermissions.configure(
-            OKSDK.Util.mergeObject(
-                options,
-                {
-                    scope: scope,
-                    redirect_uri: returnUrl,
-                    popupConfig: {
-                        width: 600,
-                        height: 300
-                    }
-                },
-                false
+        OKSDK.Widgets.builds.askGroupAppPermissions
+            .configure(
+                OKSDK.Util.mergeObject(
+                    options,
+                    {
+                        scope: scope,
+                        redirect_uri: returnUrl,
+                        popupConfig: {
+                            width: 600,
+                            height: 300
+                        }
+                    },
+                    false
+                )
             )
-        ).run();
+            .run();
     }
 
     function widgetOpen(widget, args, returnUrl) {
         args = args || {};
-        args.return = args.return || returnUrl;
+        args.return = args.return || returnUrl || args.redirect_uri;
         var popupConfig = args.popupConfig;
         var popup;
 
