@@ -395,10 +395,8 @@ var OKSDK = (function () {
                     {
                         scope: scope,
                         redirect_uri: returnUrl,
-                        popupConfig: {
-                            width: 600,
-                            height: 300
-                        }
+                        response_type: 'token',
+                        popupConfig: { width: 600, height: 300 }
                     },
                     false
                 )
