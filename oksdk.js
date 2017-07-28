@@ -411,6 +411,7 @@ var OKSDK = (function () {
         args.return = args.return || returnUrl || args.redirect_uri;
         var popupConfig = args.popupConfig;
         var popup;
+        var popupName = "OK-" + Date.now();
 
         if (popupConfig) {
             delete args.popupConfig;
@@ -432,7 +433,7 @@ var OKSDK = (function () {
                 var top = (screenHeight / 2 - h / 2) + screenOffsetTop;
             }
 
-            var popupName = popupConfig.name + Date.now();
+            popupName = args.popupConfig.name || popupName;
             popup = window.open(
                 getLinkOnWidget(widget, args),
                 popupName,
@@ -444,7 +445,7 @@ var OKSDK = (function () {
             );
 
         } else {
-            popup = window.open(getLinkOnWidget(widget, args));
+            popup = window.open(getLinkOnWidget(widget, args), popupName);
         }
 
         return popup;
