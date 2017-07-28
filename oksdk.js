@@ -433,7 +433,7 @@ var OKSDK = (function () {
                 var top = (screenHeight / 2 - h / 2) + screenOffsetTop;
             }
 
-            popupName = args.popupConfig.name || popupName;
+            popupName = popupConfig.name || popupName;
             popup = window.open(
                 getLinkOnWidget(widget, args),
                 popupName,
