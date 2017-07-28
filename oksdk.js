@@ -445,8 +445,6 @@ var OKSDK = (function () {
             popup = window.open(getLinkOnWidget(widget, args));
         }
 
-        //window.console && console.log('popup', popup);
-
         return popup;
     }
 
