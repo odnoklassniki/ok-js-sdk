@@ -394,7 +394,7 @@ var OKSDK = (function () {
                     options,
                     {
                         scope: scope,
-                        redirect_uri: returnUrl
+                        return: returnUrl
                         //response_type: 'token',
                         //popupConfig: { width: 600, height: 300 }
                     },
@@ -412,40 +412,40 @@ var OKSDK = (function () {
         //var popupName = "OK-" + Date.now();
         var popupName;
 
-        if (popupConfig) {
-            delete args.popupConfig;
-            var w = popupConfig.width;
-            var h = popupConfig.height;
-            var documentElement = document.documentElement;
-            if (typeof popupConfig.left == 'undefined') {
-                var screenLeft = window.screenLeft;
-                var innerWidth = window.innerWidth;
-                var screenOffsetLeft = typeof screenLeft == 'undefined' ? screen.left : screenLeft;
-                var screenWidth = innerWidth ? innerWidth : documentElement.clientWidth ? documentElement.clientWidth : screen.width;
-                var left = (screenWidth / 2 - w / 2) + screenOffsetLeft;
-            }
-            if (typeof popupConfig.top == 'undefined') {
-                var screenTop = window.screenTop;
-                var screenOffsetTop = typeof screenTop == 'undefined'? screen.top : screenTop;
-                var innerHeight = window.innerHeight;
-                var screenHeight = innerHeight ? innerHeight : documentElement.clientHeight ? documentElement.clientHeight : screen.height;
-                var top = (screenHeight / 2 - h / 2) + screenOffsetTop;
-            }
-
-            popupName = popupConfig.name || popupName;
-            popup = window.open(
-                getLinkOnWidget(widget, args),
-                popupName,
-                'width=' + w + ',' +
-                'height=' + h + ',' +
-                'top=' + top + ',' +
-                'left=' + left +
-                (popupConfig.options ? (',' + popupConfig.options) : '')
-            );
-
-        } else {
-            popup = window.open(getLinkOnWidget(widget, args), popupName);
-        }
+        //if (popupConfig) {
+        //    delete args.popupConfig;
+        //    var w = popupConfig.width;
+        //    var h = popupConfig.height;
+        //    var documentElement = document.documentElement;
+        //    if (typeof popupConfig.left == 'undefined') {
+        //        var screenLeft = window.screenLeft;
+        //        var innerWidth = window.innerWidth;
+        //        var screenOffsetLeft = typeof screenLeft == 'undefined' ? screen.left : screenLeft;
+        //        var screenWidth = innerWidth ? innerWidth : documentElement.clientWidth ? documentElement.clientWidth : screen.width;
+        //        var left = (screenWidth / 2 - w / 2) + screenOffsetLeft;
+        //    }
+        //    if (typeof popupConfig.top == 'undefined') {
+        //        var screenTop = window.screenTop;
+        //        var screenOffsetTop = typeof screenTop == 'undefined'? screen.top : screenTop;
+        //        var innerHeight = window.innerHeight;
+        //        var screenHeight = innerHeight ? innerHeight : documentElement.clientHeight ? documentElement.clientHeight : screen.height;
+        //        var top = (screenHeight / 2 - h / 2) + screenOffsetTop;
+        //    }
+        //
+        //    popupName = popupConfig.name || popupName;
+        //    popup = window.open(
+        //        getLinkOnWidget(widget, args),
+        //        popupName,
+        //        'width=' + w + ',' +
+        //        'height=' + h + ',' +
+        //        'top=' + top + ',' +
+        //        'left=' + left +
+        //        (popupConfig.options ? (',' + popupConfig.options) : '')
+        //    );
+        //
+        //} else {
+            popup = window.open(getLinkOnWidget(widget, args));
+        //}
 
         return popup;
     }
