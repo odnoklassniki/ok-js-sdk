@@ -396,7 +396,7 @@ var OKSDK = (function () {
                         scope: scope,
                         redirect_uri: returnUrl,
                         response_type: 'token',
-                        popupConfig: { width: 600, height: 300 }
+                        //popupConfig: { width: 600, height: 300 }
                     },
                     false
                 )
@@ -409,7 +409,8 @@ var OKSDK = (function () {
         args.return = args.return || returnUrl || args.redirect_uri;
         var popupConfig = args.popupConfig;
         var popup;
-        var popupName = "OK-" + Date.now();
+        //var popupName = "OK-" + Date.now();
+        var popupName;
 
         if (popupConfig) {
             delete args.popupConfig;
