@@ -386,13 +386,13 @@ var OKSDK = (function () {
     function widgetGroupAppPermissions(scope, returnUrl, options) {
         options = options || {};
         options.groupId = options.groupId || state.groupId;
+        scope = getInnerType(scope) == getInnerType._array ? scope.join(';') : scope;
 
         OKSDK.Widgets.builds.askGroupAppPermissions.configure(
             OKSDK.Util.mergeObject(
                 options,
                 {
-                    scope: (getClass(scope) == '[object Array]' ? scope.join(';') : scope),
-                    // TODO: dmitrylapynov: unify param name as 'return_uri -> return';
+                    scope: scope,
                     redirect_uri: returnUrl,
                     popupConfig: {
                         width: 600,
@@ -617,17 +617,21 @@ var OKSDK = (function () {
                 'openIframeLayer'
             ],
         openPopup: function () {
-            return widgetOpen(this.widgetConf.name, this.options);
+            return widgetOpen(this.widgetConf.name, this.adaptedOptions || this.options);
         },
         openUiLayer: function () {
-            return invokeUIMethod.apply(null, this.options);
+            return invokeUIMethod.apply(null, this.adaptedOptions || this.options);
         },
         openIframeLayer: function () {
-            return window.console && console.log('Iframe-layer is in development');
+            return window.console && console.warn('Iframe-layer is in development');
         },
         run: function () {
-            var options = this.options;
-            options.client_id = options.client_id || state.app_id;
+            var clientId = this.options.client_id;
+            if (typeof clientId == 'undefined'
+                || (getInnerType(clientId) == getInnerType._string && clientId.length < 1)) {
+
+                this.options.client_id = state.app_id;
+            }
             // TODO: make state update to be optional;
             this._callContext = resolveContext();
             this.configAdapter(state);
@@ -643,7 +647,7 @@ var OKSDK = (function () {
                 if (result && (!this.hasOwnProperty(method) && method in this)) {
                     var adapter = this.adapters[method];
                     if (adapter) {
-                        this.options = adapter(this.widgetConf, options);
+                        this.adaptedOptions = adapter(this.widgetConf, this.options);
                     }
                     return this[method]();
                 }
@@ -910,14 +914,14 @@ var OKSDK = (function () {
      * @returns {*}
      */
     function mergeObject(receiver, donor, rewrite) {
-        if (getClass(donor) == getClass._object && getClass(receiver) == getClass._object) {
+        if (getInnerType(donor) == getInnerType._object && getInnerType(receiver) == getInnerType._object) {
             for (var k in donor) {
                 if (donor.hasOwnProperty(k)) {
                     if (receiver.hasOwnProperty(k) && typeof rewrite !== 'undefined' && !rewrite) {
                         continue;
                     }
                     var property = donor[k];
-                    if (getClass(property) == getClass._object) {
+                    if (getInnerType(property) == getInnerType._object) {
                         mergeObject(receiver[k] = receiver[k] || {}, property, rewrite);
                     } else {
                         receiver[k] = property;
@@ -974,21 +978,22 @@ var OKSDK = (function () {
         return href;
     }
 
-    function getClass(o) {
+    function getInnerType(o) {
         return Object.prototype.toString.call(o);
     }
 
-    getClass._object = getClass({}); // [object Object]
-    getClass._function = getClass(stub_func); // [object Function]
-    getClass._array = getClass([]); // [object Array]
-    getClass._string = getClass(''); // [object String]
+    getInnerType._object = getInnerType({}); // [object Object]
+    getInnerType._function = getInnerType(stub_func); // [object Function]
+    getInnerType._array = getInnerType([]); // [object Array]
+    getInnerType._string = getInnerType(''); // [object String]
+    getInnerType._number = getInnerType(''); // [object Number]
 
     function isFunc(obj) {
-        return getClass(obj) === getClass._function;
+        return getInnerType(obj) === getInnerType._function;
     }
 
     function isString(obj) {
-        return Object.prototype.toString.call(obj) === getClass._string;
+        return Object.prototype.toString.call(obj) === getInnerType._string;
     }
 
     function toString(obj) {
@@ -1050,8 +1055,7 @@ var OKSDK = (function () {
                 ];
             })
             .withConfigAdapter(function (state) {
-                var groupId = this.options.groupId;
-                if (!groupId) {
+                if (typeof this.options.groupId == 'undefined') {
                     this.options.groupId = state.groupId;
                 }
             }),
