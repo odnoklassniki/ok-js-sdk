@@ -377,7 +377,7 @@ var OKSDK = (function () {
             OKSDK.Widgets.builds.suggest.configure(
                 OKSDK.Util.mergeObject(
                     options,
-                    {return: returnUrl}
+                    { return: returnUrl }
                 )
             ).run();
         }
@@ -395,7 +395,7 @@ var OKSDK = (function () {
                     {
                         scope: scope,
                         redirect_uri: returnUrl,
-                        response_type: 'token',
+                        //response_type: 'token',
                         popupConfig: { width: 600, height: 300 }
                     },
                     false
