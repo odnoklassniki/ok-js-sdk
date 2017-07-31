@@ -392,9 +392,10 @@ var OKSDK = (function () {
             .configure(
                 OKSDK.Util.mergeObject(
                     options,
+                    /* this will be translated in request query as params */
                     {
                         scope: scope,
-                        return: returnUrl,
+                        redirect_uri: returnUrl,
                         response_type: 'token',
                         popupConfig: { width: 600, height: 300 }
                     },
