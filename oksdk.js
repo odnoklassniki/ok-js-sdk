@@ -437,7 +437,7 @@ var OKSDK = (function () {
 
             popup = window.open(
                 getLinkOnWidget(widget, args),
-                popupName,
+                undefined,
                 'width=' + w + ',' +
                 'height=' + h + ',' +
                 'top=' + top + ',' +
