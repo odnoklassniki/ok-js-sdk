@@ -409,8 +409,7 @@ var OKSDK = (function () {
         args.return = args.return || returnUrl || args.redirect_uri;
         var popupConfig = args.popupConfig;
         var popup;
-        var popupName = "OK-" + Date.now();
-        //var popupName;
+        var popupName = "OK-popup-" + Math.random();
 
         if (popupConfig) {
             delete args.popupConfig;
@@ -432,7 +431,10 @@ var OKSDK = (function () {
                 var top = (screenHeight / 2 - h / 2) + screenOffsetTop;
             }
 
-            //popupName = popupConfig.name || popupName;
+            if (popupConfig.name) {
+                popupName = popupConfig.name;
+            }
+
             popup = window.open(
                 getLinkOnWidget(widget, args),
                 popupName,
@@ -623,7 +625,7 @@ var OKSDK = (function () {
             return invokeUIMethod.apply(null, this.adaptedOptions || this.options);
         },
         openIframeLayer: function () {
-            return window.console && console.warn('Iframe-layer is in development');
+            // 'iframe-layer feature is under development'
         },
         run: function () {
             var clientId = this.options.client_id;
@@ -932,7 +934,7 @@ var OKSDK = (function () {
             return receiver;
         }
 
-        return new Error('Merged elements should be an objects');
+        return new Error('Both merged elements should be instances of an Object type');
     }
 
     function processExternalLink(e) {
