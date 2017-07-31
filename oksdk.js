@@ -409,7 +409,7 @@ var OKSDK = (function () {
         args.return = args.return || returnUrl || args.redirect_uri;
         var popupConfig = args.popupConfig;
         var popup;
-        //var popupName = "OK-" + Date.now();
+        var popupName = "OK-" + Date.now();
         //var popupName;
 
         if (popupConfig) {
@@ -435,8 +435,7 @@ var OKSDK = (function () {
             //popupName = popupConfig.name || popupName;
             popup = window.open(
                 getLinkOnWidget(widget, args),
-                ''
-                ,
+                popupName,
                 'width=' + w + ',' +
                 'height=' + h + ',' +
                 'top=' + top + ',' +
