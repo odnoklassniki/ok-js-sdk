@@ -395,8 +395,8 @@ var OKSDK = (function () {
                     {
                         scope: scope,
                         return: returnUrl,
-                        response_type: 'token'
-                        //popupConfig: { width: 600, height: 300 }
+                        response_type: 'token',
+                        popupConfig: { width: 600, height: 300 }
                     },
                     false
                 )
@@ -409,7 +409,6 @@ var OKSDK = (function () {
         args.return = args.return || returnUrl || args.redirect_uri;
         var popupConfig = args.popupConfig;
         var popup;
-        var popupName = "OK-popup-" + Math.random();
 
         if (popupConfig) {
             delete args.popupConfig;
@@ -431,13 +430,10 @@ var OKSDK = (function () {
                 var top = (screenHeight / 2 - h / 2) + screenOffsetTop;
             }
 
-            if (popupConfig.name) {
-                popupName = popupConfig.name;
-            }
 
             popup = window.open(
                 getLinkOnWidget(widget, args),
-                undefined,
+                '',
                 'width=' + w + ',' +
                 'height=' + h + ',' +
                 'top=' + top + ',' +
