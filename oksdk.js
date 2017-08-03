@@ -16,7 +16,7 @@ var OKSDK = (function () {
         'e': EXTERNAL
     };
 
-    var APP_EXTLINK_REGEXP = /\bjs-ok-extlink\b/;
+    var APP_EXTLINK_REGEXP = /\bjs-sdk-extlink\b/;
 
     var state = {
         app_id: 0, app_key: '',
@@ -55,7 +55,7 @@ var OKSDK = (function () {
 
         if (args.use_extlinks) {
             OKSDK.Util.addExternalLinksListener(args.use_extlinks.customClass, args.use_extlinks.decorator);
-        } else {
+        } else if (extLinkListenerOn) {
             OKSDK.Util.removeExternalLinksListener();
         }
 
