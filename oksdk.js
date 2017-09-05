@@ -141,6 +141,16 @@ var OKSDK = (function () {
             delete params['session_key'];
             delete params['access_token'];
         }
+
+        for (const key in params) {
+            if (params.hasOwnProperty(key)) {
+                let param = params[key];
+                if (typeof param === 'object') {
+                    params[key] = JSON.stringify(param);
+                }
+            }
+        }
+
         if (!callOpts || !callOpts.no_sig) {
             var secret = (callOpts && callOpts.app_secret_key) ? callOpts.app_secret_key : state.sessionSecretKey;
             params['sig'] = calcSignature(params, secret);
