@@ -3,6 +3,7 @@ var OKSDK = (function () {
     const OK_CONNECT_URL = 'https://connect.ok.ru/';
     const OK_MOB_URL = 'https://m.ok.ru/';
     const OK_API_SERVER = 'https://api.ok.ru/';
+    const DEPRECATED_SIG_PARAMS = ['sig', 'access_token'];
 
     var state = {
         app_id: 0, app_key: '',
@@ -196,17 +197,19 @@ var OKSDK = (function () {
     }
 
     function calcSignature(query, secretKey) {
-        var i, keys = [];
-        for (i in query) {
-            keys.push(i.toString());
+        var keys = [],
+            sign = "";
+
+        for (var k in query) {
+            var qKey = k.toString();
+            if (DEPRECATED_SIG_PARAMS.indexOf(qKey) === -1) {
+                keys.push(qKey);
+            }
         }
         keys.sort();
-        var sign = "";
-        for (i = 0; i < keys.length; i++) {
+        for (var i = 0, size = keys.length; i < size; i++) {
             var key = keys[i];
-            if (("sig" != key) && ("access_token" != key)) {
-                sign += keys[i] + '=' + query[keys[i]];
-            }
+            sign += key + '=' + query[key];
         }
         sign += secretKey || state.sessionSecretKey;
         sign = encodeUtf8(sign);
