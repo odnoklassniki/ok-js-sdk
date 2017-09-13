@@ -18,11 +18,8 @@ var u = window.location.href;
 history.replaceState(state, title, url);
 
 window.addEventListener('blur',function() {
-
-
 	document.body.innerText+='blur '+document.visibilityState;
  		history.pushState(c,t,u);
-}
 });
 
 window.addEventListener('focus',function() {
