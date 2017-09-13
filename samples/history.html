@@ -23,10 +23,9 @@ if(document.visibilityState==='hidden') {
 });
 
 window.addEventListener('focus',function() {
-	document.body.innerText+="history "+history.length;
-	if(history.length > 1) {
-		history.popState();
-	}
+	document.body.innerText+="history "+history.length;1) {
+		history.replaceState(c,t,u);
+		history.go(1);
 })
     </script>
 
