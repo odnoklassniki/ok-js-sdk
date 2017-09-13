@@ -17,13 +17,13 @@ var u = window.location.href;
 window.addEventListener('blur',function() {
 	document.body.innerText+='blur\n';
 //	if(document.visibilityState==='hidden') {
- 		history.replaceState(state, title, url);
+ 		history.pushState(state, title, url);
 //	}
 });
 
 window.addEventListener('focus',function() {
 	document.body.innerText+='focus\n';
-	history.replaceState(c,t,u);
+	history.popState();
 })
 
 document.addEventListener('visibilitychange', function(){document.body.innerText+='visibilitychange\n';}, false);
