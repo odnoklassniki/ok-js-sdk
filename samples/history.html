@@ -15,25 +15,16 @@ var c = history.state;
 var t = document.getElementsByTagName('title')[0].innerHTML;
 var u = window.location.href;
 
-history.replaceState(state, title, url);
-
-window.addEventListener('blur',function() {
-	document.body.innerText+='blur '+document.visibilityState;
- 		history.pushState(c,t,u);
+document.getElementById('generate').addEventListener('click',function() {
+	history.replaceState(state,title,url);
 });
 
 window.addEventListener('focus',function() {
-		 		history.replaceState(state,title,url);
+	history.replaceState(c,t,u);
 })
 
-document.addEventListener('visibilitychange', function() {
-        document.body.innerText+='visibility '+document.visibilityState;
-    }, false);
-
-
-
-    </script>
-
+</script>
+<button id="generate">Generate</button>
 
 </body>
 </html>
