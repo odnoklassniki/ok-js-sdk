@@ -14,18 +14,18 @@ var url = '/abc';
 var c = history.state;
 var t = document.getElementsByTagName('title')[0].innerHTML;
 var u = window.location.href;
+
+history.replaceState(state, title, url);
+
 window.addEventListener('blur',function() {
 
-if(document.visibilityState==='hidden') {
- 		history.pushState(state, title, url);
- 		document.body.innerText+="push "+history.length;
+if(document.visibilityState!=='hidden') {
+ 		history.replaceState(c,t,u);
 }
 });
 
 window.addEventListener('focus',function() {
-	document.body.innerText+="history "+history.length;
-		history.replaceState(c,t,u);
-		history.go(1);
+		 		history.replaceState(state,title,url);
 })
     </script>
 
