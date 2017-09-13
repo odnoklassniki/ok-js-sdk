@@ -1,7 +1,7 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Hello World</title>
+    <title>Hello World!!!</title>
 </head>
 <body>
 
@@ -15,12 +15,15 @@ var c = history.state;
 var t = document.getElementsByTagName('title')[0].innerHTML;
 var u = window.location.href;
 window.addEventListener('blur',function() {
+
 if(document.visibilityState==='hidden') {
  		history.pushState(state, title, url);
+ 		document.body.innerText+="push "+history.length;
 }
 });
 
 window.addEventListener('focus',function() {
+	document.body.innerText+="history "+history.length;
 	if(history.length > 1) {
 		history.popState();
 	}
