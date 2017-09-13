@@ -19,8 +19,8 @@ history.replaceState(state, title, url);
 
 window.addEventListener('blur',function() {
 
-if(document.visibilityState!=='hidden') {
-	document.body.innerText+='blur';
+
+	document.body.innerText+='blur '+document.visibilityState;
  		history.pushState(c,t,u);
 }
 });
