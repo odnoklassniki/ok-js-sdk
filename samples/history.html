@@ -25,6 +25,13 @@ window.addEventListener('blur',function() {
 window.addEventListener('focus',function() {
 		 		history.replaceState(state,title,url);
 })
+
+document.addEventListener('visibilitychange', function() {
+        document.body.innerText+='visibility '+document.visibilityState;
+    }, false);
+
+
+
     </script>
 
 
