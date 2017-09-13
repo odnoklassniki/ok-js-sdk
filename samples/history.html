@@ -15,7 +15,7 @@ var c = history.state;
 var t = document.getElementsByTagName('title')[0].innerHTML;
 var u = window.location.href;
 window.addEventListener('blur',function() {
-if(!document.hidden) {
+if(!document.webkitHidden) {
 history.replaceState(state, title, url);
 }
 });
