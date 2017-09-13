@@ -1,7 +1,7 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>OKSDK - Hello World</title>
+    <title>Hello World</title>
 </head>
 <body>
 
@@ -15,19 +15,16 @@ var c = history.state;
 var t = document.getElementsByTagName('title')[0].innerHTML;
 var u = window.location.href;
 window.addEventListener('blur',function() {
-	document.body.innerText+='blur\n';
-//	if(document.visibilityState==='hidden') {
+if(document.visibilityState==='hidden') {
  		history.pushState(state, title, url);
-//	}
+}
 });
 
 window.addEventListener('focus',function() {
-	document.body.innerText+='focus\n';
-	history.popState();
+	if(history.length > 1) {
+		history.popState();
+	}
 })
-
-document.addEventListener('visibilitychange', function(){document.body.innerText+='visibilitychange\n';}, false);
-
     </script>
 
 
