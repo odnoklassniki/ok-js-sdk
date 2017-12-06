@@ -405,6 +405,28 @@ var OKSDK = (function () {
             .run();
     }
 
+    function widgetUserContacts(returnUrl, data, options) {
+        options = options || {};
+        if (data) {
+            options.data = JSON.stringify(data);
+        }
+        var lines = data && data.data ? data.data.length : 0;
+        OKSDK.Widgets.builds.userContacts
+            .configure(
+                OKSDK.Util.mergeObject(
+                    options,
+                    /* this will be translated in request query as params */
+                    {
+                        redirect_uri: returnUrl,
+                        response_type: 'token',
+                        popupConfig: { width: 600, height: 360 + lines * 32 }
+                    },
+                    false
+                )
+            )
+            .run();
+    }
+
     function widgetOpen(widget, args, returnUrl) {
         args = args || {};
         args.return = args.return || returnUrl || args.redirect_uri;
@@ -1058,6 +1080,13 @@ var OKSDK = (function () {
                     this.options.groupId = state.groupId;
                 }
             }),
+        userContacts: new WidgetConfigurator('WidgetUserContacts')
+            .withUiAdapter(function (data, options) {
+                return [
+                    data.uiLayerName,
+                    options.scope
+                ];
+            }),
         post: new WidgetConfigurator('WidgetMediatopicPost')
             .withUiLayerName('postMediatopic')
             .withUiAdapter(function (data, options) {
@@ -1103,13 +1132,15 @@ var OKSDK = (function () {
                 post: new WidgetLayerBuilder(widgetConfigs.post),
                 invite: new WidgetLayerBuilder(widgetConfigs.invite),
                 suggest: new WidgetLayerBuilder('WidgetSuggest'),
-                askGroupAppPermissions: new WidgetLayerBuilder(widgetConfigs.groupPermission)
+                askGroupAppPermissions: new WidgetLayerBuilder(widgetConfigs.groupPermission),
+                userContacts: new WidgetLayerBuilder(widgetConfigs.userContacts)
             },
             getBackButtonHtml: widgetBackButton,
             post: widgetMediatopicPost,
             invite: widgetInvite,
             suggest: widgetSuggest,
-            askGroupAppPermissions: widgetGroupAppPermissions
+            askGroupAppPermissions: widgetGroupAppPermissions,
+            userContacts: widgetUserContacts
         },
         Util: {
             md5: md5,
