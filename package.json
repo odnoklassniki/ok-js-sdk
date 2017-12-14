@@ -1,0 +1,7 @@
+{
+  "name": "ok-js-sdk",
+  "version": "1.0.0",
+  "description": "Javascript SDK for OK.ru",
+  "author": "ok.ru",
+  "license": "Apache-2.0"
+}
