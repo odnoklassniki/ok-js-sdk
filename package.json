@@ -1,7 +1,22 @@
 {
   "name": "ok-js-sdk",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Javascript SDK for OK.ru",
+  "main": "oksdk.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/odnoklassniki/ok-js-sdk.git"
+  },
+  "keywords": [
+    "ok",
+    "sdk",
+    "oauth",
+    "odnoklassniki"
+  ],
   "author": "ok.ru",
-  "license": "Apache-2.0"
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/odnoklassniki/ok-js-sdk/issues"
+  },
+  "homepage": "https://github.com/odnoklassniki/ok-js-sdk#readme"
 }

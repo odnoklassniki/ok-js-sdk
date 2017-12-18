@@ -1,5 +1,10 @@
-"use strict";
-var OKSDK = (function () {
+(function (global, factory) {
+	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
+	typeof define === 'function' && define.amd ? define(['exports'], factory) :
+	(factory((global.OKSDK = {})));
+}(this, (function (exports) {
+    'use strict';
+
     var OK_CONNECT_URL = 'https://connect.ok.ru/';
     var OK_MOB_URL = 'https://m.ok.ru/';
     var OK_API_SERVER = 'https://api.ok.ru/';
@@ -591,29 +596,31 @@ var OKSDK = (function () {
      */
 
     // ---------------------------------------------------------------------------------------------------
-    return {
-        init: init,
-        REST: {
-            call: restCall,
-            calcSignature: calcSignatureExternal
-        },
-        Payment: {
-            show: paymentShow
-        },
-        Widgets: {
-            getBackButtonHtml: widgetBackButton,
-            post: widgetMediatopicPost,
-            invite: widgetInvite,
-            suggest: widgetSuggest
-        },
-        Util: {
-            md5: md5,
-            encodeUtf8: encodeUtf8,
-            decodeUtf8: decodeUtf8,
-            encodeBase64: btoa,
-            decodeBase64: atob,
-            getRequestParameters: getRequestParameters,
-            toString: toString
-        }
+    exports.init = init;
+
+    exports.REST = {
+        call: restCall,
+        calcSignature: calcSignatureExternal
     };
-})();
+
+    exports.Payment = {
+        show: paymentShow
+    };
+
+    exports.Widgets = {
+        getBackButtonHtml: widgetBackButton,
+        post: widgetMediatopicPost,
+        invite: widgetInvite,
+        suggest: widgetSuggest
+    };
+
+    exports.Util = {
+        md5: md5,
+        encodeUtf8: encodeUtf8,
+        decodeUtf8: decodeUtf8,
+        encodeBase64: btoa,
+        decodeBase64: atob,
+        getRequestParameters: getRequestParameters,
+        toString: toString
+    }
+})));
