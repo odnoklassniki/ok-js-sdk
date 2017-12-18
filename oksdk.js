@@ -1,8 +1,8 @@
 "use strict";
 var OKSDK = (function () {
-    const OK_CONNECT_URL = 'https://connect.ok.ru/';
-    const OK_MOB_URL = 'https://m.ok.ru/';
-    const OK_API_SERVER = 'https://api.ok.ru/';
+    var OK_CONNECT_URL = 'https://connect.ok.ru/';
+    var OK_MOB_URL = 'https://m.ok.ru/';
+    var OK_API_SERVER = 'https://api.ok.ru/';
 
     var state = {
         app_id: 0, app_key: '',
@@ -101,7 +101,7 @@ var OKSDK = (function () {
     }
 
     function restCallPOST(query, callback) {
-        const xhr = new XMLHttpRequest();
+        var xhr = new XMLHttpRequest();
         xhr.open("POST", state.baseUrl, true);
         xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
         xhr.onreadystatechange = function() {
@@ -142,9 +142,10 @@ var OKSDK = (function () {
             delete params['access_token'];
         }
 
-        for (const key in params) {
+        var key;
+        for (key in params) {
             if (params.hasOwnProperty(key)) {
-                let param = params[key];
+                var param = params[key];
                 if (typeof param === 'object') {
                     params[key] = JSON.stringify(param);
                 }
@@ -156,8 +157,8 @@ var OKSDK = (function () {
             params['sig'] = calcSignature(params, secret);
         }
 
-        let query = "";
-        for (const key in params) {
+        var query = "";
+        for (key in params) {
             if (params.hasOwnProperty(key)) {
                 if (query.length !== 0) {
                     query += '&';
@@ -170,7 +171,7 @@ var OKSDK = (function () {
             return restCallPOST(query, callback);
         }
 
-        const callbackId = "__oksdk__callback_" + (++rest_counter);
+        var callbackId = "__oksdk__callback_" + (++rest_counter);
         window[callbackId] = function (status, data, error) {
             if (isFunc(callback)) {
                 callback(status, data, error);
@@ -246,7 +247,7 @@ var OKSDK = (function () {
         params['code'] = productCode;
 
         options = options || {};
-        const host = options['mob_pay_url'] || state.mobServer;
+        var host = options['mob_pay_url'] || state.mobServer;
 
         params["application_key"] = state.app_key;
         if (state.sessionKey) {
@@ -270,7 +271,7 @@ var OKSDK = (function () {
     // Widgets
     // ---------------------------------------------------------------------------------------------------
 
-    const WIDGET_SIGNED_ARGS = ["st.attachment", "st.return", "st.redirect_uri", "st.state"];
+    var WIDGET_SIGNED_ARGS = ["st.attachment", "st.return", "st.redirect_uri", "st.state"];
 
     /**
      * Returns HTML to be used as a back button for mobile app<br/>
@@ -371,11 +372,11 @@ var OKSDK = (function () {
      * @returns {String}
      */
     function md5(str) {
-        const hex_chr = "0123456789abcdef";
+        var hex_chr = "0123456789abcdef";
 
         function rhex(num) {
-            let str = "";
-            for (let j = 0; j <= 3; j++) {
+            var str = "";
+            for (var j = 0; j <= 3; j++) {
                 str += hex_chr.charAt((num >> (j * 8 + 4)) & 0x0F) +
                     hex_chr.charAt((num >> (j * 8)) & 0x0F);
             }
@@ -387,9 +388,9 @@ var OKSDK = (function () {
          * Append padding bits and the length, as described in the MD5 standard.
          */
         function str2blks_MD5(str) {
-            let nblk = ((str.length + 8) >> 6) + 1;
-            let blks = new Array(nblk * 16);
-            let i = 0;
+            var nblk = ((str.length + 8) >> 6) + 1;
+            var blks = new Array(nblk * 16);
+            var i = 0;
             for (i = 0; i < nblk * 16; i++) {
                 blks[i] = 0;
             }
@@ -406,8 +407,8 @@ var OKSDK = (function () {
          * to work around bugs in some JS interpreters.
          */
         function add(x, y) {
-            let lsw = (x & 0xFFFF) + (y & 0xFFFF);
-            let msw = (x >> 16) + (y >> 16) + (lsw >> 16);
+            var lsw = (x & 0xFFFF) + (y & 0xFFFF);
+            var msw = (x >> 16) + (y >> 16) + (lsw >> 16);
             return (msw << 16) | (lsw & 0xFFFF);
         }
 
@@ -442,17 +443,17 @@ var OKSDK = (function () {
             return cmn(c ^ (b | (~d)), a, b, x, s, t);
         }
 
-        let x = str2blks_MD5(str);
-        let a = 1732584193;
-        let b = -271733879;
-        let c = -1732584194;
-        let d = 271733878;
+        var x = str2blks_MD5(str);
+        var a = 1732584193;
+        var b = -271733879;
+        var c = -1732584194;
+        var d = 271733878;
 
-        for (let i = 0; i < x.length; i += 16) {
-            const olda = a;
-            const oldb = b;
-            const oldc = c;
-            const oldd = d;
+        for (var i = 0; i < x.length; i += 16) {
+            var olda = a;
+            var oldb = b;
+            var oldc = c;
+            var oldd = d;
 
             a = ff(a, b, c, d, x[i + 0], 7, -680876936);
             d = ff(d, a, b, c, x[i + 1], 12, -389564586);
