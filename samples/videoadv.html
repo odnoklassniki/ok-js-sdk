@@ -34,9 +34,9 @@
     function show() {
         var style = document.getElementsByTagName('iframe')[0].style;
         style.display = '';
-	setTimeount(function(){
+	setTimeout(function(){
         window.frames[0].postMessage(JSON.stringify({method: 'show'}), '*');
-},0);
+},10);
    }
 
     function injectFrame() {
