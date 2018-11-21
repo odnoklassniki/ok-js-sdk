@@ -32,10 +32,10 @@
     }
 
     function show() {
-        window.frames[0].postMessage(JSON.stringify({method: 'show'}), '*');
         var style = document.getElementsByTagName('iframe')[0].style;
         style.display = '';
-    }
+        window.frames[0].postMessage(JSON.stringify({method: 'show'}), '*');
+   }
 
     function injectFrame() {
         var frame = document.createElement('iframe');
