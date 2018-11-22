@@ -35,7 +35,11 @@ var log = function(e){
              a[e.type].c.push(t.identifier);   
         });
     }
-    document.getElementById("log").innerText=JSON.stringify(a, null, 2);
+    var t = "";
+    for(var i in a) {
+        t+=i+"="+JSON.stringify(a[i])+"\n";
+    }
+    document.getElementById("log").innerText=t;
 };
 var open = function(e) {
   log(e);
