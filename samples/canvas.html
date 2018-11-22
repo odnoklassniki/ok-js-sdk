@@ -2,9 +2,9 @@
 <head>
     <meta charset="UTF-8">
     <title>OKSDK - Hello World</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable: no">
     <script type="text/javascript" src="../oksdk.js"></script>
-    <style>*{margin:0;padding:0}</style>
+    <style>*{margin:0;padding:0}html,body{overflow: hidden}</style>
 </head>
 <body>
 
@@ -18,14 +18,30 @@
     hdc = can.getContext('2d');
     // Fill the path
     hdc.fillStyle = "#9ea7b8";
-    hdc.fillRect(0,0,320,320);
+    hdc.fillRect(0,0,320,160);
     can.style.opacity = '0.2';
-var log = function(e){console.log(e.type,e.touches,e.changedTouches);};
+    var a = {};
+var log = function(e){
+    console.log(e.type,e.touches,e.changedTouches);
+    e.preventDefault();
+    a[e.type]={t:[],c:[]};
+    if(e.touches) {
+        Array.prototype.forEach.call(e.touches,function(t) {
+             a[e.type].t.push(t.identifier);   
+        });
+    }
+    if(e.changedTouches) {
+        Array.prototype.forEach.call(e.changedTouches,function(t) {
+             a[e.type].c.push(t.identifier);   
+        });
+    }
+    document.getElementById("log").innerText=JSON.stringify(a, null, 2);
+};
 var open = function(e) {
   log(e);
 var rect = can.getBoundingClientRect();
 var x = e.changedTouches[0].pageX - rect.left,y=e.changedTouches[0].pageY - rect.top;
-if(x>140 && x< 180 &&  y>280) {
+if(x>140 && x< 180 &&  y>120) {
 window.open("http://m.ok.ru/");  
 }
 }
@@ -44,13 +60,14 @@ can.addEventListener("touchstart", log , false);
 can.addEventListener("touchmove", log , false);
 can.addEventListener("touchcancel", log , false);
     hdc.fillStyle = "#FF0000";
-    hdc.fillRect(140,280,40,40);
+    hdc.fillRect(140,120,40,40);
      hdc.fillStyle = "#FF0000";
     hdc.fillRect(140,0,40,40);
 
     });
 </script>
 Hello world!<br>
-<canvas width="320px" height="320px" ></canvas>
+<canvas width="320px" height="160px" ></canvas>
+<pre id="log"></pre>
 </body>
 </html>
