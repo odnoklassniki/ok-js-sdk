@@ -18,7 +18,7 @@
     hdc = can.getContext('2d');
     // Fill the path
     hdc.fillStyle = "#9ea7b8";
-    hdc.fillRect(0,0,320,160);
+    hdc.fillRect(0,0,320,320);
     can.style.opacity = '0.2';
     var a = {};
 var log = function(e){
@@ -45,7 +45,7 @@ var open = function(e) {
   log(e);
 var rect = can.getBoundingClientRect();
 var x = e.changedTouches[0].pageX - rect.left,y=e.changedTouches[0].pageY - rect.top;
-if(x>140 && x< 180 &&  y>120) {
+if(x>140 && x< 180 &&  y>280) {
 window.open("http://m.ok.ru/");  
 }
 }
@@ -64,14 +64,14 @@ can.addEventListener("touchstart", log , false);
 can.addEventListener("touchmove", log , false);
 can.addEventListener("touchcancel", log , false);
     hdc.fillStyle = "#FF0000";
-    hdc.fillRect(140,120,40,40);
+    hdc.fillRect(140,280,40,40);
      hdc.fillStyle = "#FF0000";
     hdc.fillRect(140,0,40,40);
 
     });
 </script>
 Hello world!<br>
-<canvas width="320px" height="160px" ></canvas>
+<canvas width="320px" height="320px" ></canvas>
 <pre id="log"></pre>
 </body>
 </html>
