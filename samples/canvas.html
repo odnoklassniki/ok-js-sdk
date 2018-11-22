@@ -1,0 +1,56 @@
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>OKSDK - Hello World</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script type="text/javascript" src="../oksdk.js"></script>
+    <style>*{margin:0;padding:0}</style>
+</head>
+<body>
+
+<div id="backBtn"></div>
+<div id="content"></div>
+
+<script type="text/javascript">
+    document.addEventListener('DOMContentLoaded', function () {
+	var can = document.getElementsByTagName('canvas')[0];
+    // get it's context
+    hdc = can.getContext('2d');
+    // Fill the path
+    hdc.fillStyle = "#9ea7b8";
+    hdc.fillRect(0,0,320,320);
+    can.style.opacity = '0.2';
+var log = function(e){console.log(e.type,e.touches,e.changedTouches);};
+var open = function(e) {
+  log(e);
+var rect = can.getBoundingClientRect();
+var x = e.changedTouches[0].pageX - rect.left,y=e.changedTouches[0].pageY - rect.top;
+if(x>140 && x< 180 &&  y>280) {
+window.open("http://m.ok.ru/");  
+}
+}
+
+var click = function(e) {
+  log(e);
+var rect = can.getBoundingClientRect();
+var x = e.pageX - rect.left,y=e.pageY - rect.top;
+if(x>140 && x< 180 &&  y<40) {
+window.open("http://m.ok.ru/");  
+}
+}
+can.addEventListener("touchend", open , false);
+can.addEventListener("click", click , false);
+can.addEventListener("touchstart", log , false);
+can.addEventListener("touchmove", log , false);
+can.addEventListener("touchcancel", log , false);
+    hdc.fillStyle = "#FF0000";
+    hdc.fillRect(140,280,40,40);
+     hdc.fillStyle = "#FF0000";
+    hdc.fillRect(140,0,40,40);
+
+    });
+</script>
+Hello world!<br>
+<canvas width="320px" height="320px" ></canvas>
+</body>
+</html>
