@@ -77,6 +77,8 @@
 
         // Receive a message {type:"payment",result:"..."}
         if (data.type == 'payment') {
+	    lastPaymentWindow.close();
+            lastPaymentWindow = null;	
             let paymentResult = data.result;
             alert('Payment returned result ' + JSON.stringify(paymentResult));
         }
