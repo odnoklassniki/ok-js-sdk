@@ -15,10 +15,11 @@
 </div>
 
 <script type="text/javascript">
+    var lastPaymentWindow = null;
     function openPayment() {
         // Here we initiate payment by opening a new window selling a product
         // named "Zombie leg" for 1 OK, with callback id for the item "zombie-leg-1"
-        OKSDK.Payment.show("Zombie Leg", 1, "zombie-leg-1");
+        lastPaymentWindow = OKSDK.Payment.show("Zombie Leg", 1, "zombie-leg-1");
     }
 
     // Start our processing when the page is loaded
@@ -66,6 +67,11 @@
     // Since we are using separate window when opening a payment, we should send/receive messages
     // to communicate with the opened window
     window.addEventListener('message', function (event) {
+        if(lastPaymentWindow && event.data.indexOf('payment')==0) {
+          lastPaymentWindow.close();
+          lastPaymentWindow = null;
+          return;	
+	}
         var data = JSON.parse(event.data || "");
 
         // Receive a message {type:"payment",result:"..."}
