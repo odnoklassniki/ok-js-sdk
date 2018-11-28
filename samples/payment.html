@@ -24,9 +24,11 @@
 
     // Start our processing when the page is loaded
     document.addEventListener('DOMContentLoaded', function () {
+        let args = OKSDK.Util.getRequestParameters(window.location.search);
+
         var config = {
-            app_id: 0,      // <-- insert APP ID here
-            app_key: ''     // <-- insert APP PUBLIC KEY here
+            app_id: args['app_id'],      // <-- insert APP ID here
+            app_key: args['app_key']     // <-- insert APP PUBLIC KEY here
         };
 
         OKSDK.init(config, function () {
@@ -43,7 +45,6 @@
             alert('OKSDK error' + OKSDK.Util.toString(error));
         });
 
-        let args = OKSDK.Util.getRequestParameters(window.location.search);
         if (args['custom_args'] && (args['custom_args'].search("payment") == 0)) {
             // When payment is finished the application is being re-launched with
             // custom_args containing "payment=ok" or "payment=cancel".
