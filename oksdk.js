@@ -9,6 +9,8 @@
     var OK_MOB_URL = 'https://m.ok.ru/';
     var OK_API_SERVER = 'https://api.ok.ru/';
 
+    var OK_ANDROID_APP_UA = 'OkApp';
+
     var state = {
         app_id: 0, app_key: '',
         sessionKey: '', accessToken: '', sessionSecretKey: '', apiServer: '', widgetServer: '', mobServer: '',
@@ -245,7 +247,74 @@
     // Payment
     // ---------------------------------------------------------------------------------------------------
 
+    /**
+     * Opens a payment window for a selected product
+     *
+     * @param {String} productName      product's name to be displayed in a payment window
+     * @param {Number} productPrice     product's price to be displayed in a payment window
+     * @param {String} productCode      product's code used for validation in a server callback and displayed in transaction info
+     * @param {Object} options          additional payment parameters
+     */
     function paymentShow(productName, productPrice, productCode, options) {
+       return window.open(getPaymentQuery(productName, productPrice, productCode, options));
+    }
+
+    /**
+     * Opens a payment window for a selected product as an embedded iframe
+     * You can either create frame container element by yourself or leave element creation for this method
+     *
+     * @param {String} productName      product's name to be displayed in a payment window
+     * @param {Number} productPrice     product's price to be displayed in a payment window
+     * @param {String} productCode      product's code used for validation in a server callback and displayed in transaction info
+     * @param {Object} options          additional payment parameters
+     * @param {String} frameId          id of a frame container element
+     */
+    function paymentShowInFrame(productName, productPrice, productCode, options, frameId) {
+        var frameElement =
+        "<iframe 'style='position: absolute; left: 0px; top: 0px; background-color: white; z-index: 9999;' src='"
+        + getPaymentQuery(productName, productPrice, productCode, options)
+        + "'; width='100%' height='100%' frameborder='0'></iframe>";
+
+        var frameContainer = window.document.getElementById(frameId);
+        if (!frameContainer) {
+            frameContainer = window.document.createElement("div")
+            frameContainer.id = frameId;
+            document.body.appendChild(frameContainer);
+        }
+
+        frameContainer.innerHTML = frameElement;
+        frameContainer.style.display = "block";
+        frameContainer.style.position = "fixed";
+        frameContainer.style.left = "0px";
+        frameContainer.style.top = "0px";
+        frameContainer.style.width = "100%";
+        frameContainer.style.height = "100%";
+    }
+
+    /**
+     * Closes a payment window and hides it's container on game's page
+     *
+     * @param {String} frameId  id of a frame container element
+     */
+    function closePaymentFrame(frameId) {
+        if (window.parent) {
+            var frameContainer = window.parent.document.getElementById(frameId);
+            if (frameContainer) {
+                frameContainer.innerHTML = '';
+                frameContainer.style.display = "none";
+                frameContainer.style.position = "";
+                frameContainer.style.left = "";
+                frameContainer.style.top = "";
+                frameContainer.style.width = "";
+                frameContainer.style.height = "";
+            }
+        }
+    }
+
+    /**
+     * Genrates an OK payment service URL for a selected product
+     */
+    function getPaymentQuery(productName, productPrice, productCode, options) {
         var params = {};
         params['name'] = productName;
         params['price'] = productPrice;
@@ -269,7 +338,7 @@
             }
         }
 
-       return window.open(query);
+       return query;
     }
 
     // ---------------------------------------------------------------------------------------------------
@@ -580,6 +649,15 @@
         return decodeURIComponent(escape(utftext));
     }
 
+    /**
+     * Checks if a game is opened in an OK Android app's WebView
+     */
+    function isLaunchedInOKAndroidWebView() {
+        var userAgent = window.navigator.userAgent;
+
+        return (userAgent && userAgent.length >= 0 && userAgent.indexOf(OK_ANDROID_APP_UA));
+    }
+
     /** stub func */
     function nop() {}
 
@@ -604,7 +682,10 @@
     };
 
     exports.Payment = {
-        show: paymentShow
+        show: paymentShow,
+        showInFrame: paymentShowInFrame,
+        query: getPaymentQuery,
+        closePaymentFrame: closePaymentFrame
     };
 
     exports.Widgets = {
@@ -621,6 +702,7 @@
         encodeBase64: btoa,
         decodeBase64: atob,
         getRequestParameters: getRequestParameters,
-        toString: toString
+        toString: toString,
+        isLaunchedFromOKApp: isLaunchedInOKAndroidWebView
     }
 })));
