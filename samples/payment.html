@@ -36,8 +36,8 @@
     // Start our processing when the page is loaded
     document.addEventListener('DOMContentLoaded', function () {
         var config = {
-            app_id: 0,      // <-- insert APP ID here
-            app_key: ''     // <-- insert APP PUBLIC KEY here
+            app_id: 1250806016,      // <-- insert APP ID here
+            app_key: 'CBAKMOILEBABABABA'     // <-- insert APP PUBLIC KEY here
         };
 
         OKSDK.init(config, function () {
@@ -69,11 +69,12 @@
                 OKSDK.Payment.closePaymentFrame("paymentFrame");
             }
 
-            if (OKSDK.Util.isLaunchedFromOKApp()) {
+            if (window.opener) {
                     // Post a message {type:"payment",result:"..."}
                     window.opener.postMessage(JSON.stringify({
                         type: 'payment',
-                        result: paymentResult
+                        result: paymentResult,
+                        fromAndroid: OKSDK.Util.isLaunchedFromOKApp()
                     }), "*");
                     window.close();
                     return;
@@ -89,7 +90,8 @@
         // Receive a message {type:"payment",result:"..."}
         if (data.type == 'payment') {
             let paymentResult = data.result;
-            alert('Payment returned result ' + JSON.stringify(paymentResult));
+            let fromAndroid = data.fromAndroid;
+            alert('Payment returned result: ' + JSON.stringify(paymentResult) + '\n' + 'From android: ' + fromAndroid);
         }
     }, false);
 </script>
