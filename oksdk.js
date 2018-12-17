@@ -249,6 +249,11 @@
 
     /**
      * Opens a payment window for a selected product
+     *
+     * @param {String} productName      product's name to be displayed in a payment window
+     * @param {Number} productPrice     product's price to be displayed in a payment window
+     * @param {String} productCode      product's code used for validation in a server callback and displayed in transaction info
+     * @param {Object} options          additional payment parameters
      */
     function paymentShow(productName, productPrice, productCode, options) {
        return window.open(getPaymentQuery(productName, productPrice, productCode, options));
@@ -256,6 +261,14 @@
 
     /**
      * Opens a payment window for a selected product in an embedded iframe
+     * Opens a payment window for a selected product as an embedded iframe
+     * You can either create frame container element by yourself or leave element creation for this method
+     *
+     * @param {String} productName      product's name to be displayed in a payment window
+     * @param {Number} productPrice     product's price to be displayed in a payment window
+     * @param {String} productCode      product's code used for validation in a server callback and displayed in transaction info
+     * @param {Object} options          additional payment parameters
+     * @param {String} frameId          id of a frame container element
      */
     function paymentShowInFrame(productName, productPrice, productCode, options, frameId) {
         var frameElement =
@@ -279,6 +292,12 @@
         frameContainer.style.height = "100%";
     }
 
+  
+    /**
+     * Closes a payment window and hides it's container on game's page
+     *
+     * @param {String} frameId  id of a frame container element
+     */
     function closePaymentFrame(frameId) {
         if (window.parent) {
             var frameContainer = window.parent.document.getElementById(frameId);
@@ -634,10 +653,11 @@
 
     /**
      * Checks if a game was opened in OK Android app's WebView
+     * Checks if a game is opened in an OK Android app's WebView
      */
     function isLaunchedInOKAndroidWebView() {
         var userAgent = window.navigator.userAgent;
-
+      
         return (userAgent && userAgent.length >= 0 && userAgent.indexOf(OK_ANDROID_APP_UA) > -1);
     }
 
