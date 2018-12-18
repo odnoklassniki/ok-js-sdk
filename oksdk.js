@@ -260,6 +260,7 @@
     }
 
     /**
+     * Opens a payment window for a selected product in an embedded iframe
      * Opens a payment window for a selected product as an embedded iframe
      * You can either create frame container element by yourself or leave element creation for this method
      *
@@ -291,6 +292,7 @@
         frameContainer.style.height = "100%";
     }
 
+  
     /**
      * Closes a payment window and hides it's container on game's page
      *
@@ -650,12 +652,13 @@
     }
 
     /**
+     * Checks if a game was opened in OK Android app's WebView
      * Checks if a game is opened in an OK Android app's WebView
      */
     function isLaunchedInOKAndroidWebView() {
         var userAgent = window.navigator.userAgent;
-
-        return (userAgent && userAgent.length >= 0 && userAgent.indexOf(OK_ANDROID_APP_UA));
+      
+        return (userAgent && userAgent.length >= 0 && userAgent.indexOf(OK_ANDROID_APP_UA) > -1);
     }
 
     /** stub func */
