@@ -1,15 +1,21 @@
 <html>
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
     <title>OKSDK - Payment processing</title>
 
     <script type="text/javascript" src="../oksdk.js"></script>
 </head>
+<div id="paymentFrame" style="display: none"></div>
 <body>
 
 <div id="content" style="display: none;">
     <p>
         <input type="button" onclick="openPayment();" value="Open payment"/><br/>
+    </p>
+    <p>
+        <input type="button" onclick="openPaymentInFrame();" value="Open payment in frame"/><br/>
     </p>
 </div>
 
@@ -18,6 +24,12 @@
         // Here we initiate payment by opening a new window selling a product
         // named "Zombie leg" for 1 OK, with callback id for the item "zombie-leg-1"
         OKSDK.Payment.show("Zombie Leg", 1, "zombie-leg-1");
+    }
+
+    function openPaymentInFrame() {
+        // Here we initiate payment by opening a new window selling a product
+        // named "Zombie leg" for 1 OK, with callback id for the item "zombie-leg-1"
+        OKSDK.Payment.showInFrame("Zombie Leg", 1, "zombie-leg-1", null, "paymentFrame");
     }
 
     // Start our processing when the page is loaded
@@ -48,13 +60,20 @@
             //
             let paymentResult = decodeURIComponent(args['custom_args']).split('=');
 
-            // Post a message {type:"payment",result:"..."}
-            window.opener.postMessage(JSON.stringify({
-                type: 'payment',
-                result: paymentResult
-            }), "*");
-            window.close();
-            return;
+            if (window.parent) {
+                OKSDK.Payment.closePaymentFrame("paymentFrame");
+            }
+
+            if (window.opener) {
+                    // Post a message {type:"payment",result:"..."}
+                    window.opener.postMessage(JSON.stringify({
+                        type: 'payment',
+                        result: paymentResult,
+                        fromAndroid: OKSDK.Util.isLaunchedFromOKApp()
+                    }), "*");
+                    window.close();
+                    return;
+            }
         }
     });
 
@@ -66,7 +85,8 @@
         // Receive a message {type:"payment",result:"..."}
         if (data.type == 'payment') {
             let paymentResult = data.result;
-            alert('Payment returned result ' + JSON.stringify(paymentResult));
+            let fromAndroid = data.fromAndroid;
+            alert('Payment returned result: ' + JSON.stringify(paymentResult) + '\n' + 'From android: ' + fromAndroid);
         }
     }, false);
 </script>

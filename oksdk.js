@@ -1,8 +1,15 @@
-"use strict";
-var OKSDK = (function () {
-    const OK_CONNECT_URL = 'https://connect.ok.ru/';
-    const OK_MOB_URL = 'https://m.ok.ru/';
-    const OK_API_SERVER = 'https://api.ok.ru/';
+(function (global, factory) {
+	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
+	typeof define === 'function' && define.amd ? define(['exports'], factory) :
+	(factory((global.OKSDK = {})));
+}(this, (function (exports) {
+    'use strict';
+
+    var OK_CONNECT_URL = 'https://connect.ok.ru/';
+    var OK_MOB_URL = 'https://m.ok.ru/';
+    var OK_API_SERVER = 'https://api.ok.ru/';
+
+    var OK_ANDROID_APP_UA = 'OkApp';
 
     var state = {
         app_id: 0, app_key: '',
@@ -101,7 +108,7 @@ var OKSDK = (function () {
     }
 
     function restCallPOST(query, callback) {
-        const xhr = new XMLHttpRequest();
+        var xhr = new XMLHttpRequest();
         xhr.open("POST", state.baseUrl, true);
         xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
         xhr.onreadystatechange = function() {
@@ -141,13 +148,24 @@ var OKSDK = (function () {
             delete params['session_key'];
             delete params['access_token'];
         }
+
+        var key;
+        for (key in params) {
+            if (params.hasOwnProperty(key)) {
+                var param = params[key];
+                if (typeof param === 'object') {
+                    params[key] = JSON.stringify(param);
+                }
+            }
+        }
+
         if (!callOpts || !callOpts.no_sig) {
             var secret = (callOpts && callOpts.app_secret_key) ? callOpts.app_secret_key : state.sessionSecretKey;
             params['sig'] = calcSignature(params, secret);
         }
 
-        let query = "";
-        for (const key in params) {
+        var query = "";
+        for (key in params) {
             if (params.hasOwnProperty(key)) {
                 if (query.length !== 0) {
                     query += '&';
@@ -160,7 +178,7 @@ var OKSDK = (function () {
             return restCallPOST(query, callback);
         }
 
-        const callbackId = "__oksdk__callback_" + (++rest_counter);
+        var callbackId = "__oksdk__callback_" + (++rest_counter);
         window[callbackId] = function (status, data, error) {
             if (isFunc(callback)) {
                 callback(status, data, error);
@@ -229,14 +247,83 @@ var OKSDK = (function () {
     // Payment
     // ---------------------------------------------------------------------------------------------------
 
+    /**
+     * Opens a payment window for a selected product
+     *
+     * @param {String} productName      product's name to be displayed in a payment window
+     * @param {Number} productPrice     product's price to be displayed in a payment window
+     * @param {String} productCode      product's code used for validation in a server callback and displayed in transaction info
+     * @param {Object} options          additional payment parameters
+     */
     function paymentShow(productName, productPrice, productCode, options) {
+       return window.open(getPaymentQuery(productName, productPrice, productCode, options));
+    }
+
+    /**
+     * Opens a payment window for a selected product in an embedded iframe
+     * Opens a payment window for a selected product as an embedded iframe
+     * You can either create frame container element by yourself or leave element creation for this method
+     *
+     * @param {String} productName      product's name to be displayed in a payment window
+     * @param {Number} productPrice     product's price to be displayed in a payment window
+     * @param {String} productCode      product's code used for validation in a server callback and displayed in transaction info
+     * @param {Object} options          additional payment parameters
+     * @param {String} frameId          id of a frame container element
+     */
+    function paymentShowInFrame(productName, productPrice, productCode, options, frameId) {
+        var frameElement =
+        "<iframe 'style='position: absolute; left: 0px; top: 0px; background-color: white; z-index: 9999;' src='"
+        + getPaymentQuery(productName, productPrice, productCode, options)
+        + "'; width='100%' height='100%' frameborder='0'></iframe>";
+
+        var frameContainer = window.document.getElementById(frameId);
+        if (!frameContainer) {
+            frameContainer = window.document.createElement("div")
+            frameContainer.id = frameId;
+            document.body.appendChild(frameContainer);
+        }
+
+        frameContainer.innerHTML = frameElement;
+        frameContainer.style.display = "block";
+        frameContainer.style.position = "fixed";
+        frameContainer.style.left = "0px";
+        frameContainer.style.top = "0px";
+        frameContainer.style.width = "100%";
+        frameContainer.style.height = "100%";
+    }
+
+  
+    /**
+     * Closes a payment window and hides it's container on game's page
+     *
+     * @param {String} frameId  id of a frame container element
+     */
+    function closePaymentFrame(frameId) {
+        if (window.parent) {
+            var frameContainer = window.parent.document.getElementById(frameId);
+            if (frameContainer) {
+                frameContainer.innerHTML = '';
+                frameContainer.style.display = "none";
+                frameContainer.style.position = "";
+                frameContainer.style.left = "";
+                frameContainer.style.top = "";
+                frameContainer.style.width = "";
+                frameContainer.style.height = "";
+            }
+        }
+    }
+
+    /**
+     * Genrates an OK payment service URL for a selected product
+     */
+    function getPaymentQuery(productName, productPrice, productCode, options) {
         var params = {};
         params['name'] = productName;
         params['price'] = productPrice;
         params['code'] = productCode;
 
         options = options || {};
-        const host = options['mob_pay_url'] || state.mobServer;
+        var host = options['mob_pay_url'] || state.mobServer;
 
         params["application_key"] = state.app_key;
         if (state.sessionKey) {
@@ -253,14 +340,14 @@ var OKSDK = (function () {
             }
         }
 
-        window.open(query);
+       return query;
     }
 
     // ---------------------------------------------------------------------------------------------------
     // Widgets
     // ---------------------------------------------------------------------------------------------------
 
-    const WIDGET_SIGNED_ARGS = ["st.attachment", "st.return", "st.redirect_uri", "st.state"];
+    var WIDGET_SIGNED_ARGS = ["st.attachment", "st.return", "st.redirect_uri", "st.state"];
 
     /**
      * Returns HTML to be used as a back button for mobile app<br/>
@@ -363,11 +450,11 @@ var OKSDK = (function () {
      * @returns {String}
      */
     function md5(str) {
-        const hex_chr = "0123456789abcdef";
+        var hex_chr = "0123456789abcdef";
 
         function rhex(num) {
-            let str = "";
-            for (let j = 0; j <= 3; j++) {
+            var str = "";
+            for (var j = 0; j <= 3; j++) {
                 str += hex_chr.charAt((num >> (j * 8 + 4)) & 0x0F) +
                     hex_chr.charAt((num >> (j * 8)) & 0x0F);
             }
@@ -379,9 +466,9 @@ var OKSDK = (function () {
          * Append padding bits and the length, as described in the MD5 standard.
          */
         function str2blks_MD5(str) {
-            let nblk = ((str.length + 8) >> 6) + 1;
-            let blks = new Array(nblk * 16);
-            let i = 0;
+            var nblk = ((str.length + 8) >> 6) + 1;
+            var blks = new Array(nblk * 16);
+            var i = 0;
             for (i = 0; i < nblk * 16; i++) {
                 blks[i] = 0;
             }
@@ -398,8 +485,8 @@ var OKSDK = (function () {
          * to work around bugs in some JS interpreters.
          */
         function add(x, y) {
-            let lsw = (x & 0xFFFF) + (y & 0xFFFF);
-            let msw = (x >> 16) + (y >> 16) + (lsw >> 16);
+            var lsw = (x & 0xFFFF) + (y & 0xFFFF);
+            var msw = (x >> 16) + (y >> 16) + (lsw >> 16);
             return (msw << 16) | (lsw & 0xFFFF);
         }
 
@@ -434,17 +521,17 @@ var OKSDK = (function () {
             return cmn(c ^ (b | (~d)), a, b, x, s, t);
         }
 
-        let x = str2blks_MD5(str);
-        let a = 1732584193;
-        let b = -271733879;
-        let c = -1732584194;
-        let d = 271733878;
+        var x = str2blks_MD5(str);
+        var a = 1732584193;
+        var b = -271733879;
+        var c = -1732584194;
+        var d = 271733878;
 
-        for (let i = 0; i < x.length; i += 16) {
-            const olda = a;
-            const oldb = b;
-            const oldc = c;
-            const oldd = d;
+        for (var i = 0; i < x.length; i += 16) {
+            var olda = a;
+            var oldb = b;
+            var oldc = c;
+            var oldd = d;
 
             a = ff(a, b, c, d, x[i + 0], 7, -680876936);
             d = ff(d, a, b, c, x[i + 1], 12, -389564586);
@@ -566,6 +653,16 @@ var OKSDK = (function () {
         return decodeURIComponent(escape(utftext));
     }
 
+    /**
+     * Checks if a game was opened in OK Android app's WebView
+     * Checks if a game is opened in an OK Android app's WebView
+     */
+    function isLaunchedInOKAndroidWebView() {
+        var userAgent = window.navigator.userAgent;
+      
+        return (userAgent && userAgent.length >= 0 && userAgent.indexOf(OK_ANDROID_APP_UA) > -1);
+    }
+
     /** stub func */
     function nop() {}
 
@@ -582,29 +679,35 @@ var OKSDK = (function () {
      */
 
     // ---------------------------------------------------------------------------------------------------
-    return {
-        init: init,
-        REST: {
-            call: restCall,
-            calcSignature: calcSignatureExternal
-        },
-        Payment: {
-            show: paymentShow
-        },
-        Widgets: {
-            getBackButtonHtml: widgetBackButton,
-            post: widgetMediatopicPost,
-            invite: widgetInvite,
-            suggest: widgetSuggest
-        },
-        Util: {
-            md5: md5,
-            encodeUtf8: encodeUtf8,
-            decodeUtf8: decodeUtf8,
-            encodeBase64: btoa,
-            decodeBase64: atob,
-            getRequestParameters: getRequestParameters,
-            toString: toString
-        }
+    exports.init = init;
+
+    exports.REST = {
+        call: restCall,
+        calcSignature: calcSignatureExternal
     };
-})();
+
+    exports.Payment = {
+        show: paymentShow,
+        showInFrame: paymentShowInFrame,
+        query: getPaymentQuery,
+        closePaymentFrame: closePaymentFrame
+    };
+
+    exports.Widgets = {
+        getBackButtonHtml: widgetBackButton,
+        post: widgetMediatopicPost,
+        invite: widgetInvite,
+        suggest: widgetSuggest
+    };
+
+    exports.Util = {
+        md5: md5,
+        encodeUtf8: encodeUtf8,
+        decodeUtf8: decodeUtf8,
+        encodeBase64: btoa,
+        decodeBase64: atob,
+        getRequestParameters: getRequestParameters,
+        toString: toString,
+        isLaunchedFromOKApp: isLaunchedInOKAndroidWebView
+    }
+})));
