@@ -265,9 +265,11 @@ var OKSDK = (function () {
     /**
      * Returns HTML to be used as a back button for mobile app<br/>
      * If back button is required (like js app opened in browser from native mobile app) the required html
-     * will be returned in #onSucсess callback
+     * will be returned in #onSucсess callback<br/>
+     * Since 2019 it is no longer required for the app to use the widget
      * @param {onSuccessCallback} onSuccess
      * @param {String} [style]
+     * @deprecated
      */
     function widgetBackButton(onSuccess, style) {
         if (state.container || state.accessToken) return;

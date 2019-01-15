@@ -7,7 +7,6 @@
 </head>
 <body>
 
-<div id="backBtn"></div>
 <div id="content" style="display: none;">
     <p>
         <input type="button" onclick="openPayment();" value="Open payment"/><br/>
@@ -31,10 +30,6 @@
         OKSDK.init(config, function () {
             // Authorization / initialization finished correctly
             // We can start proceeding with OAUTH stuff
-
-            OKSDK.Widgets.getBackButtonHtml(function (html) {
-                document.getElementById('backBtn').innerHTML = html;
-            });
 
             document.getElementById('content').style.display = '';
 

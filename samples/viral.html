@@ -7,7 +7,6 @@
 </head>
 <body>
 
-<div id="backBtn"></div>
 <div id="content" style="display: none;">
     <fieldset>
         <legend>Posts a simple "hello world!" media topic</legend>
@@ -53,10 +52,6 @@
         };
 
         OKSDK.init(config, function () {
-
-            OKSDK.Widgets.getBackButtonHtml(function (html) {
-                document.getElementById('backBtn').innerHTML = html;
-            });
 
             document.getElementById('content').style.display = '';
 
