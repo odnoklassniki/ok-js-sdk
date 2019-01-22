@@ -5,9 +5,8 @@
 
     <title>OKSDK - Payment processing</title>
 
-    <script type="text/javascript" src="../oksdk.js"></script>
+    <script type="text/javascript" src="oksdk.js"></script>
 </head>
-<div id="paymentFrame" style="display: none"></div>
 <body>
 
 <div id="backBtn"></div>
@@ -66,7 +65,13 @@
             let paymentResult = decodeURIComponent(args['custom_args']).split('=');
 
             if (window.parent) {
+                    window.parent.postMessage(JSON.stringify({
+                        type: 'payment',
+                        result: paymentResult,
+                        fromAndroid: OKSDK.Util.isLaunchedFromOKApp()
+                    }), "*");
                 OKSDK.Payment.closePaymentFrame("paymentFrame");
+
             }
 
             if (window.opener) {
@@ -81,6 +86,7 @@
             }
         }
     });
+
 
     // Since we are using separate window when opening a payment, we should send/receive messages
     // to communicate with the opened window

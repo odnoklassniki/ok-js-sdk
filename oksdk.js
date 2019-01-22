@@ -17,6 +17,24 @@
         baseUrl: '',
         container: false, header_widget: ''
     };
+    var ads_state = {
+        init: false,
+        ready: false
+    };
+
+    var ads_widget_style = {
+        border: 0,
+        position: "fixed",
+        top: 0,
+        right: 0,
+        bottom: 0,
+        left: 0,
+        width: "100%",
+        height: "100%",
+        zIndex: 1000,
+        display: "none"
+    }
+
     var sdk_success = nop;
     var sdk_failure = nop;
     var rest_counter = 0;
@@ -283,7 +301,7 @@
         if (window.parent) {
             var frameContainer = window.parent.document.getElementById(frameId);
             if (frameContainer) {
-                frameContainer.innerHTML = '';
+                frameContainer.innerHTML = "";
                 frameContainer.style.display = "none";
                 frameContainer.style.position = "";
                 frameContainer.style.left = "";
@@ -323,6 +341,142 @@
 
        return query;
     }
+
+    // ---------------------------------------------------------------------------------------------------
+    // Ads
+    // ---------------------------------------------------------------------------------------------------
+
+    /**
+     * Injects an OK Ads Widget to a game's page
+     *
+     * @param {string}      [frameId]   optional frame element id. If not present "ok-ads-frame" id will be used
+     * @param {function}    [secretKey] callbackFunction used for all ad methods. Takes a single object input parameter
+     */
+    function injectAdsWidget(frameId, callbackFunction) {
+        if (ads_state.frame_element) {
+            return;
+        }
+        var frame = document.createElement("iframe");
+        var framesCount = window.frames.length;
+        frame.id = frameId || "ok-ads-frame";
+
+        frame.src = getAdsWidgetSrc();
+        for (var prop in ads_widget_style) {
+            frame.style[prop] = ads_widget_style[prop];
+        }
+        frame.style.display = "none";
+        document.body.appendChild(frame);
+        ads_state.frame_element = frame;
+        ads_state.window_frame = window.frames[framesCount];
+
+        var callback = callbackFunction || defaultAdCallback;
+        window.addEventListener('message', callback);
+    }
+
+    /**
+     * Requests an ad to be shown for a user from ad providers
+     */
+    function prepareMidroll() {
+        if (!ads_state.window_frame) {
+            console.log("Ads are not initialized. Please initialize them first");
+            return;
+        }
+        ads_state.window_frame.postMessage(JSON.stringify({method: 'prepare', arguments: ['midroll']}), '*');
+    }
+
+    /**
+     * Shows previously prepared ad to a user
+     */
+    function showMidroll() {
+        if (!ads_state.window_frame) {
+            console.log("Ads are not initialized. Please initialize them first");
+            return;
+        }
+        if (!ads_state.ready) {
+            console.log("Ad is not ready. Please make sure ad is ready to be shown");
+        }
+        ads_state.frame_element.style.display = '';
+        setTimeout(function(){
+            ads_state.window_frame.postMessage(JSON.stringify({method: 'show'}), '*');
+        }, 10);
+    }
+
+    /**
+     * Removed an Ok Ads Widget from page source and completely resets ads status
+     */
+    function removeAdsWidget() {
+        if (ads_state.frame_element) {
+            ads_state.frame_element.parentNode.removeChild(ads_state.frame_element);
+            OKSDK.Ads.State.init = ads_state.init = false;
+            OKSDK.Ads.State.ready = ads_state.ready = false;
+            OKSDK.Ads.State.frame_element = ads_state.frame_element = null;
+            OKSDK.Ads.State.window_frame = ads_state.window_frame = null;
+        }
+    }
+
+    /**
+     * Generates an URL for OK Ads Widget
+     */
+    function getAdsWidgetSrc() {
+        var sig = md5("call_id=1" + state.sessionSecretKey).toString();
+        var widgetSrc = state.widgetServer + "dk?st.cmd=WidgetVideoAdv&st.app=" + state.app_id + "&st.sig=" + sig + "&st.call_id=1&st.session_key=" + state.sessionKey;
+        return widgetSrc;
+    }
+
+    /**
+    * Default callback function used for OK Ads Widget
+    */
+    function defaultAdCallback(message) {
+        if (!message.data) {
+            return;
+        }
+
+        var data = JSON.parse(message.data);
+
+        if (!data.call || !data.call.method) {
+            return;
+        }
+
+        if (!data.result || !data.result.status) {
+            return;
+        }
+
+        switch (data.call.method) {
+            case "init":
+                if (data.result.status === "ok") {
+                    console.log("OK Ads initialization complete");
+                    ads_state.init = true;
+                } else {
+                    console.log("OK Ads failed to initialize");
+                    ads_state.init = false;
+                }
+                break;
+            case "prepare":
+                if (data.result.status === "ok") {
+                    if (data.result.code === "ready") {
+                        console.log("Ad is ready to be shown");
+                        ads_state.ready = true;
+                    }
+                } else {
+                    console.log("Ad is not ready to be shown. Status: " + data.result.status + ". Code: " + data.result.code);
+                    ads_state.ready = false;
+                }
+                break;
+            case "show":
+                ads_state.frame_element.style.display = "none";
+                if (data.result.status === "ok") {
+                    if (data.result.code === "complete") {
+                        console.log("Ad is successfully shown");
+                        ads_state.ready = false;
+                    }
+                } else {
+                    console.log("An ad can't be shown. Status: " + data.result.status + ". Code: " + data.result.code)
+                    ads_state.ready = false;
+                }
+                break;
+        }
+    }
+
 
     // ---------------------------------------------------------------------------------------------------
     // Widgets
@@ -677,6 +831,14 @@
         invite: widgetInvite,
         suggest: widgetSuggest
     };
+
+    exports.Ads = {
+        init: injectAdsWidget,
+        prepareMidroll: prepareMidroll,
+        showMidroll: showMidroll,
+        destroy: removeAdsWidget,
+        State: ads_state
+    }
 
     exports.Util = {
         md5: md5,
