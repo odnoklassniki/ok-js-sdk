@@ -118,25 +118,18 @@
         }
         xhr.onreadystatechange = function () {
             if (xhr.readyState === XMLHttpRequest.DONE) {
-                if (xhr.status === 200) {
-                    if (isFunc(callback)) {
-                        var responseJson;
-                        try {
-                            responseJson = JSON.parse(xhr.responseText)
-                        } catch (e) {
-                            responseJson = {"result": xhr.responseText}
-                        }
+                if (!isFunc(callback)) return;
+                var responseJson;
+                try {
+                    responseJson = JSON.parse(xhr.responseText)
+                } catch (e) {
+                    responseJson = {"result": xhr.responseText}
+                }
 
-                        if (responseJson.hasOwnProperty("error_msg")) {
-                            callback("error", null, JSON.stringify(responseJson))
-                        } else {
-                            callback("ok", responseJson, null)
-                        }
-                    }
+                if (xhr.status != 200 || responseJson.hasOwnProperty("error_msg")) {
+                    callback("error", null, responseJson)
                 } else {
-                    if (isFunc(callback)) {
-                        callback("error", null, xhr.responseText);
-                    }
+                    callback("ok", responseJson, null)
                 }
             }
         };
