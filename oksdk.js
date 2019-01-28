@@ -120,7 +120,7 @@
             if (xhr.readyState === XMLHttpRequest.DONE) {
                 if (xhr.status === 200) {
                     if (isFunc(callback)) {
-                        callback("ok", xhr.responseText, null);
+                        callback("ok", JSON.parse(xhr.responseText), null);
                     }
                 } else {
                     if (isFunc(callback)) {
