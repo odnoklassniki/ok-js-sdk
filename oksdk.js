@@ -33,7 +33,7 @@
         height: "100%",
         zIndex: 1000,
         display: "none"
-    }
+    };
 
     var sdk_success = nop;
     var sdk_failure = nop;
@@ -220,16 +220,6 @@
         return params;
     }
 
-    function wrapCallback(success, failure, dataProcessor) {
-        return function (status, data, error) {
-            if (status == 'ok') {
-                if (isFunc(success)) success(isFunc(dataProcessor) ? dataProcessor(data) : data);
-            } else {
-                if (isFunc(failure)) failure(error);
-            }
-        };
-    }
-
     // ---------------------------------------------------------------------------------------------------
     // Payment
     // ---------------------------------------------------------------------------------------------------
@@ -265,7 +255,7 @@
 
         var frameContainer = window.document.getElementById(frameId);
         if (!frameContainer) {
-            frameContainer = window.document.createElement("div")
+            frameContainer = window.document.createElement("div");
             frameContainer.id = frameId;
             document.body.appendChild(frameContainer);
         }
@@ -338,7 +328,7 @@
      * Injects an OK Ads Widget to a game's page
      *
      * @param {string}      [frameId]   optional frame element id. If not present "ok-ads-frame" id will be used
-     * @param {function}    [secretKey] callbackFunction used for all ad methods. Takes a single object input parameter
+     * @param {function}    [callbackFunction] callbackFunction used for all ad methods. Takes a single object input parameter
      */
     function injectAdsWidget(frameId, callbackFunction) {
         if (ads_state.frame_element) {
@@ -458,7 +448,7 @@
                         ads_state.ready = false;
                     }
                 } else {
-                    console.log("An ad can't be shown. Status: " + data.result.status + ". Code: " + data.result.code)
+                    console.log("An ad can't be shown. Status: " + data.result.status + ". Code: " + data.result.code);
                     ads_state.ready = false;
                 }
                 break;
@@ -471,24 +461,6 @@
     // ---------------------------------------------------------------------------------------------------
 
     var WIDGET_SIGNED_ARGS = ["st.attachment", "st.return", "st.redirect_uri", "st.state"];
-
-    /**
-     * Returns HTML to be used as a back button for mobile app<br/>
-     * If back button is required (like js app opened in browser from native mobile app) the required html
-     * will be returned in #onSucсess callback<br/>
-     * Since 2019 it is no longer required for the app to use the widget
-     * @param {onSuccessCallback} onSuccess
-     * @param {String} [style]
-     * @deprecated
-     */
-    function widgetBackButton(onSuccess, style) {
-        if (state.container || state.accessToken) return;
-        restCall('widget.getWidgetContent',
-            {wid: state.header_widget || 'mobile-header-small', style: style || null},
-            wrapCallback(onSuccess, null, function (data) {
-                return decodeUtf8(atob(data))
-            }));
-    }
 
     /**
      * Opens mediatopic post widget
@@ -818,7 +790,7 @@
     };
 
     exports.Widgets = {
-        getBackButtonHtml: widgetBackButton,
+        getBackButtonHtml: nop,
         post: widgetMediatopicPost,
         invite: widgetInvite,
         suggest: widgetSuggest
@@ -830,7 +802,7 @@
         showMidroll: showMidroll,
         destroy: removeAdsWidget,
         State: ads_state
-    }
+    };
 
     exports.Util = {
         md5: md5,
