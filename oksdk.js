@@ -2,7 +2,7 @@
 	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
 	typeof define === 'function' && define.amd ? define(['exports'], factory) :
 	(factory((global.OKSDK = {})));
-}(this, (function (exports) {
+}(this, function (exports) {
     'use strict';
 
     var OK_CONNECT_URL = 'https://connect.ok.ru/';
@@ -33,11 +33,10 @@
         height: "100%",
         zIndex: 1000,
         display: "none"
-    }
+    };
 
     var sdk_success = nop;
     var sdk_failure = nop;
-    var rest_counter = 0;
 
     // ---------------------------------------------------------------------------------------------------
     // General
@@ -106,43 +105,35 @@
     // REST
     // ---------------------------------------------------------------------------------------------------
 
-    function restLoad(url) {
-        var script = document.createElement('script');
-        script.src = url;
-        script.async = true;
-        var done = false;
-        script.onload = script.onreadystatechange = function () {
-            if (!done && (!this.readyState || this.readyState === "loaded" || this.readyState === "complete")) {
-                done = true;
-                script.onload = null;
-                script.onreadystatechange = null;
-                if (script && script.parentNode) {
-                    script.parentNode.removeChild(script);
-                }
-            }
-        };
-        var headElem = document.getElementsByTagName('head')[0];
-        headElem.appendChild(script);
-    }
+    var REST_NO_SIGN_ARGS = ["sig", "access_token"];
 
-    function restCallPOST(query, callback) {
+    function executeRemoteRequest(query, usePost, callback) {
         var xhr = new XMLHttpRequest();
-        xhr.open("POST", state.baseUrl, true);
-        xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-        xhr.onreadystatechange = function() {
-            if (xhr.readyState ===  XMLHttpRequest.DONE) {
-                if (xhr.status === 200) {
-                    if (isFunc(callback)) {
-                        callback("ok", xhr.responseText, null);
-                    }
+        if (usePost) {
+            xhr.open("POST", state.baseUrl, true);
+            xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+        } else {
+            xhr.open("GET", state.baseUrl + "?" + query, true);
+            xhr.setRequestHeader("Content-type", "application/json");
+        }
+        xhr.onreadystatechange = function () {
+            if (xhr.readyState === XMLHttpRequest.DONE) {
+                if (!isFunc(callback)) return;
+                var responseJson;
+                try {
+                    responseJson = JSON.parse(xhr.responseText)
+                } catch (e) {
+                    responseJson = {"result": xhr.responseText}
+                }
+
+                if (xhr.status != 200 || responseJson.hasOwnProperty("error_msg")) {
+                    callback("error", null, responseJson)
                 } else {
-                    if (isFunc(callback)) {
-                        callback("error", null, xhr.responseText);
-                    }
+                    callback("ok", responseJson, null)
                 }
             }
         };
-        xhr.send(query);
+        xhr.send(usePost ? query : null);
     }
 
     /**
@@ -156,7 +147,6 @@
      * @param {boolean} [callOpts.no_sig] true if no signature is required for the method
      * @param {string} [callOpts.app_secret_key] required for non-session requests
      * @param {string} [callOpts.use_post] send request via POST
-     * @returns {string}
      */
     function restCall(method, params, callback, callOpts) {
         params = params || {};
@@ -185,29 +175,12 @@
         var query = "";
         for (key in params) {
             if (params.hasOwnProperty(key)) {
-                if (query.length !== 0) {
-                    query += '&';
-                }
+                if (query.length !== 0) query += '&';
                 query += key + "=" + encodeURIComponent(params[key]);
             }
         }
 
-        if (callOpts && callOpts.use_post) {
-            return restCallPOST(query, callback);
-        }
-
-        var callbackId = "__oksdk__callback_" + (++rest_counter);
-        window[callbackId] = function (status, data, error) {
-            if (isFunc(callback)) {
-                callback(status, data, error);
-            }
-            window[callbackId] = null;
-            try {
-                delete window[callbackId];
-            } catch (e) {}
-        };
-        restLoad(state.baseUrl + '?' + query + "&js_callback=" + callbackId);
-        return callbackId;
+        return executeRemoteRequest(query, callOpts && callOpts.use_post, callback);
     }
 
     /**
@@ -230,7 +203,7 @@
         var sign = "";
         for (i = 0; i < keys.length; i++) {
             var key = keys[i];
-            if (("sig" != key) && ("access_token" != key)) {
+            if (REST_NO_SIGN_ARGS.indexOf(key) == -1) {
                 sign += keys[i] + '=' + query[keys[i]];
             }
         }
@@ -251,16 +224,6 @@
         return params;
     }
 
-    function wrapCallback(success, failure, dataProcessor) {
-        return function(status, data, error) {
-            if (status == 'ok') {
-                if (isFunc(success)) success(isFunc(dataProcessor) ? dataProcessor(data) : data);
-            } else {
-                if (isFunc(failure)) failure(error);
-            }
-        };
-    }
-
     // ---------------------------------------------------------------------------------------------------
     // Payment
     // ---------------------------------------------------------------------------------------------------
@@ -274,7 +237,7 @@
      * @param {Object} options          additional payment parameters
      */
     function paymentShow(productName, productPrice, productCode, options) {
-       return window.open(getPaymentQuery(productName, productPrice, productCode, options));
+        return window.open(getPaymentQuery(productName, productPrice, productCode, options));
     }
 
     /**
@@ -290,13 +253,13 @@
      */
     function paymentShowInFrame(productName, productPrice, productCode, options, frameId) {
         var frameElement =
-        "<iframe 'style='position: absolute; left: 0px; top: 0px; background-color: white; z-index: 9999;' src='"
-        + getPaymentQuery(productName, productPrice, productCode, options)
-        + "'; width='100%' height='100%' frameborder='0'></iframe>";
+            "<iframe 'style='position: absolute; left: 0px; top: 0px; background-color: white; z-index: 9999;' src='"
+            + getPaymentQuery(productName, productPrice, productCode, options)
+            + "'; width='100%' height='100%' frameborder='0'></iframe>";
 
         var frameContainer = window.document.getElementById(frameId);
         if (!frameContainer) {
-            frameContainer = window.document.createElement("div")
+            frameContainer = window.document.createElement("div");
             frameContainer.id = frameId;
             document.body.appendChild(frameContainer);
         }
@@ -310,7 +273,7 @@
         frameContainer.style.height = "100%";
     }
 
-  
+
     /**
      * Closes a payment window and hides it's container on game's page
      *
@@ -358,7 +321,7 @@
             }
         }
 
-       return query;
+        return query;
     }
 
     // ---------------------------------------------------------------------------------------------------
@@ -369,7 +332,7 @@
      * Injects an OK Ads Widget to a game's page
      *
      * @param {string}      [frameId]   optional frame element id. If not present "ok-ads-frame" id will be used
-     * @param {function}    [secretKey] callbackFunction used for all ad methods. Takes a single object input parameter
+     * @param {function}    [callbackFunction] callbackFunction used for all ad methods. Takes a single object input parameter
      */
     function injectAdsWidget(frameId, callbackFunction) {
         if (ads_state.frame_element) {
@@ -489,7 +452,7 @@
                         ads_state.ready = false;
                     }
                 } else {
-                    console.log("An ad can't be shown. Status: " + data.result.status + ". Code: " + data.result.code)
+                    console.log("An ad can't be shown. Status: " + data.result.status + ". Code: " + data.result.code);
                     ads_state.ready = false;
                 }
                 break;
@@ -502,24 +465,6 @@
     // ---------------------------------------------------------------------------------------------------
 
     var WIDGET_SIGNED_ARGS = ["st.attachment", "st.return", "st.redirect_uri", "st.state"];
-
-    /**
-     * Returns HTML to be used as a back button for mobile app<br/>
-     * If back button is required (like js app opened in browser from native mobile app) the required html
-     * will be returned in #onSucсess callback<br/>
-     * Since 2019 it is no longer required for the app to use the widget
-     * @param {onSuccessCallback} onSuccess
-     * @param {String} [style]
-     * @deprecated
-     */
-    function widgetBackButton(onSuccess, style) {
-        if (state.container || state.accessToken) return;
-        restCall('widget.getWidgetContent',
-            {wid: state.header_widget || 'mobile-header-small', style: style || null},
-            wrapCallback(onSuccess, null, function(data) {
-                return decodeUtf8(atob(data))
-            }));
-    }
 
     /**
      * Opens mediatopic post widget
@@ -813,12 +758,13 @@
      */
     function isLaunchedInOKAndroidWebView() {
         var userAgent = window.navigator.userAgent;
-      
+
         return (userAgent && userAgent.length >= 0 && userAgent.indexOf(OK_ANDROID_APP_UA) > -1);
     }
 
     /** stub func */
-    function nop() {}
+    function nop() {
+    }
 
     /**
      * @callback onSuccessCallback
@@ -848,7 +794,7 @@
     };
 
     exports.Widgets = {
-        getBackButtonHtml: widgetBackButton,
+        getBackButtonHtml: nop,
         post: widgetMediatopicPost,
         invite: widgetInvite,
         suggest: widgetSuggest
@@ -860,7 +806,7 @@
         showMidroll: showMidroll,
         destroy: removeAdsWidget,
         State: ads_state
-    }
+    };
 
     exports.Util = {
         md5: md5,
@@ -872,4 +818,4 @@
         toString: toString,
         isLaunchedFromOKApp: isLaunchedInOKAndroidWebView
     }
-})));
+}));
