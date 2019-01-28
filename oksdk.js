@@ -120,7 +120,18 @@
             if (xhr.readyState === XMLHttpRequest.DONE) {
                 if (xhr.status === 200) {
                     if (isFunc(callback)) {
-                        callback("ok", JSON.parse(xhr.responseText), null);
+                        var responseJson;
+                        try {
+                            responseJson = JSON.parse(xhr.responseText)
+                        } catch (e) {
+                            responseJson = {"result": xhr.responseText}
+                        }
+
+                        if (responseJson.hasOwnProperty("error_msg")) {
+                            callback("error", null, JSON.stringify(responseJson))
+                        } else {
+                            callback("ok", responseJson, null)
+                        }
                     }
                 } else {
                     if (isFunc(callback)) {
