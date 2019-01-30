@@ -71,8 +71,8 @@
         state.accessToken = hParams['access_token'];
         state.sessionSecretKey = params["session_secret_key"] || hParams['session_secret_key'];
         state.apiServer = args["api_server"] || params["api_server"] || OK_API_SERVER;
-        state.widgetServer = args["widget_server"] || params['widget_server'] || OK_CONNECT_URL;
-        state.mobServer = args["mob_server"] || params["mob_server"] || OK_MOB_URL;
+        state.widgetServer = getRemoteUrl([args["widget_server"], params['widget_server']], OK_CONNECT_URL);
+        state.mobServer = getRemoteUrl([args["mob_server"], params["mob_server"]], OK_MOB_URL);
         state.baseUrl = state.apiServer + "fb.do";
         state.header_widget = params['header_widget'];
         state.container = params['container'];
@@ -99,6 +99,17 @@
             }
         }
         sdk_success();
+    }
+
+    /**
+     * @param {Array} sources
+     * @param {String} fallback
+     */
+    function getRemoteUrl(sources, fallback) {
+        for (var source of sources) {
+            if (source && (source.startsWith("http://") || source.startsWith("https://"))) return source;
+        }
+        return fallback;
     }
 
     // ---------------------------------------------------------------------------------------------------
