@@ -5,7 +5,7 @@
 
     <title>OKSDK - Payment processing</title>
 
-    <script type="text/javascript" src="oksdk.js"></script>
+    <script type="text/javascript" src="../oksdk.js"></script>
 </head>
 <body>
 
@@ -65,8 +65,6 @@
                         result: paymentResult,
                         fromAndroid: OKSDK.Util.isLaunchedFromOKApp()
                     }), "*");
-                OKSDK.Payment.closePaymentFrame("paymentFrame");
-
             }
 
             if (window.opener) {
@@ -82,16 +80,36 @@
         }
     });
 
+    function processLegacyPayment(event) {
+        return JSON.parse(event.data || "");
+    }
+
+    function processNewPayment(event) {
+       switch (event.data) {
+            case "payment=ok":
+                return {"type": "payment", "result": "ok"};
+            case "payment=cancel":
+                return {"type": "payment", "result": "cancel"};
+            default:
+                return {};
+        }
+    }
 
     // Since we are using separate window when opening a payment, we should send/receive messages
     // to communicate with the opened window
     window.addEventListener('message', function (event) {
-        var data = JSON.parse(event.data || "");
+        OKSDK.Payment.closePaymentFrame("paymentFrame");
 
-        // Receive a message {type:"payment",result:"..."}
-        if (data.type == 'payment') {
-            let paymentResult = data.result;
-            let fromAndroid = data.fromAndroid;
+        var result;
+        try {
+            result = processLegacyPayment(event);
+        } catch (e) {
+            result = processNewPayment(event);
+        }
+
+        if (result.type == 'payment') {
+            let paymentResult = result.result;
+            let fromAndroid = result.fromAndroid || OKSDK.Util.isLaunchedFromOKApp();
             alert('Payment returned result: ' + JSON.stringify(paymentResult) + '\n' + 'From android: ' + fromAndroid);
         }
     }, false);

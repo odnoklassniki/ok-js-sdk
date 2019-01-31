@@ -31,8 +31,8 @@
 <script type="text/javascript">
     // Start our processing when the page is loaded
     document.addEventListener('DOMContentLoaded', function () {
-        var standalone = (window.parent == window);
-        if (!standalone) {
+        var mobile = OKSDK.Util.getRequestParameters().mob;
+        if (!mobile) {
            window.API_callback = function() {
                console.log(arguments);
                document.getElementById("log").textContent += getCurrentTime() +  " [WEB] " + JSON.stringify(arguments); + "\n";
@@ -53,7 +53,7 @@
             });
         }
 
-        document.getElementsByClassName(standalone?'mobile':'portal')[0].style.display='';
+        document.getElementsByClassName(mobile?'mobile':'portal')[0].style.display='';
     });
 
     function adsCallback(message) {
