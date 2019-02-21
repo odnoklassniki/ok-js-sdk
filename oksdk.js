@@ -554,7 +554,17 @@
         if (state.sessionKey) {
             query += '&st.session_key=' + state.sessionKey;
         }
-        window.open(query);
+
+        let w = window.open(query);
+        if (w === null) {
+            let event = {
+                "data": {
+                    "code": "popup_blocked"
+                }
+            };
+
+            window.postMessage(JSON.stringify(event), '*');
+        }
     }
 
     // ---------------------------------------------------------------------------------------------------
