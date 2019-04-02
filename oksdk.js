@@ -1,7 +1,7 @@
 (function (global, factory) {
-	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
-	typeof define === 'function' && define.amd ? define(['exports'], factory) :
-	(factory((global.OKSDK = {})));
+    typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
+        typeof define === 'function' && define.amd ? define(['exports'], factory) :
+            (factory((global.OKSDK = {})));
 }(this, function (exports) {
     'use strict';
 
@@ -37,6 +37,7 @@
 
     var sdk_success = nop;
     var sdk_failure = nop;
+    var eventCallback = nop;
 
     // ---------------------------------------------------------------------------------------------------
     // General
@@ -98,6 +99,7 @@
                 return;
             }
         }
+        window.addEventListener("message", onWindowMessage);
         sdk_success();
     }
 
@@ -111,6 +113,16 @@
             if (source && (source.startsWith("http://") || source.startsWith("https://"))) return source;
         }
         return fallback;
+    }
+
+    function invokeUIMethod() {
+        var argStr = "";
+        for (var i = 0; i < arguments.length; i++) {
+            var arg = arguments[i];
+            if (i > 0) argStr += '$';
+            if (arg != null) argStr += encodeURIComponent(String(arg));
+        }
+        parent.postMessage("__FAPI__" + argStr, state.mobServer);
     }
 
     // ---------------------------------------------------------------------------------------------------
@@ -209,7 +221,7 @@
     function calcSignature(query, secretKey) {
         var i, keys = [];
         for (i in query) {
-            keys.push(i.toString());
+            if (query.hasOwnProperty(i)) keys.push(i.toString());
         }
         keys.sort();
         var sign = "";
@@ -295,7 +307,7 @@
         if (window.parent) {
             var frameContainer;
             try {
-               frameContainer = window.document.getElementById(frameId) || window.parent.document.getElementById(frameId);
+                frameContainer = window.document.getElementById(frameId) || window.parent.document.getElementById(frameId);
             } catch (e) {
                 console.log(e);
             }
@@ -396,7 +408,7 @@
             console.log("Ad is not ready. Please make sure ad is ready to be shown");
         }
         ads_state.frame_element.style.display = '';
-        setTimeout(function(){
+        setTimeout(function () {
             ads_state.window_frame.postMessage(JSON.stringify({method: 'show'}), '*');
         }, 10);
     }
@@ -424,8 +436,8 @@
     }
 
     /**
-    * Default callback function used for OK Ads Widget
-    */
+     * Default callback function used for OK Ads Widget
+     */
     function defaultAdCallback(message) {
         if (!message.data) {
             return;
@@ -477,6 +489,21 @@
         }
     }
 
+    function isNativeAdSupported() {
+        return (typeof OKApp !== 'undefined') && (typeof OKApp.isAdsEnabled !== 'undefined') && OKApp.isAdsEnabled()
+    }
+
+    function requestNativeAd() {
+        if (isNativeAdSupported()) invokeUIMethod('requestNativeAd')
+    }
+
+    function requestManualAd() {
+        if (isNativeAdSupported()) invokeUIMethod('requestManualAd')
+    }
+
+    function showLoadedAd() {
+        if (isNativeAdSupported()) invokeUIMethod('showLoadedAd')
+    }
 
     // ---------------------------------------------------------------------------------------------------
     // Widgets
@@ -660,7 +687,7 @@
             var oldc = c;
             var oldd = d;
 
-            a = ff(a, b, c, d, x[i + 0], 7, -680876936);
+            a = ff(a, b, c, d, x[i], 7, -680876936);
             d = ff(d, a, b, c, x[i + 1], 12, -389564586);
             c = ff(c, d, a, b, x[i + 2], 17, 606105819);
             b = ff(b, c, d, a, x[i + 3], 22, -1044525330);
@@ -680,7 +707,7 @@
             a = gg(a, b, c, d, x[i + 1], 5, -165796510);
             d = gg(d, a, b, c, x[i + 6], 9, -1069501632);
             c = gg(c, d, a, b, x[i + 11], 14, 643717713);
-            b = gg(b, c, d, a, x[i + 0], 20, -373897302);
+            b = gg(b, c, d, a, x[i], 20, -373897302);
             a = gg(a, b, c, d, x[i + 5], 5, -701558691);
             d = gg(d, a, b, c, x[i + 10], 9, 38016083);
             c = gg(c, d, a, b, x[i + 15], 14, -660478335);
@@ -703,7 +730,7 @@
             c = hh(c, d, a, b, x[i + 7], 16, -155497632);
             b = hh(b, c, d, a, x[i + 10], 23, -1094730640);
             a = hh(a, b, c, d, x[i + 13], 4, 681279174);
-            d = hh(d, a, b, c, x[i + 0], 11, -358537222);
+            d = hh(d, a, b, c, x[i], 11, -358537222);
             c = hh(c, d, a, b, x[i + 3], 16, -722521979);
             b = hh(b, c, d, a, x[i + 6], 23, 76029189);
             a = hh(a, b, c, d, x[i + 9], 4, -640364487);
@@ -711,7 +738,7 @@
             c = hh(c, d, a, b, x[i + 15], 16, 530742520);
             b = hh(b, c, d, a, x[i + 2], 23, -995338651);
 
-            a = ii(a, b, c, d, x[i + 0], 6, -198630844);
+            a = ii(a, b, c, d, x[i], 6, -198630844);
             d = ii(d, a, b, c, x[i + 7], 10, 1126891415);
             c = ii(c, d, a, b, x[i + 14], 15, -1416354905);
             b = ii(b, c, d, a, x[i + 5], 21, -57434055);
@@ -806,8 +833,38 @@
      * @param {Object} error error data
      */
 
+    /**
+     * @callback CB_eventCallback
+     * @param {String} method name
+     * @param {String} code ('ok', 'error', 'event')
+     * @param {String} data
+     */
+
+    /**
+     * process postMessage
+     * @param {EventListener} event
+     */
+    function onWindowMessage(event) {
+        if (event.origin === state.mobServer || event.origin == state.apiServer) {
+            var args = event.data.split('$', -1);
+            if (args.length < 3) return;
+            args = args.map(decodeURIComponent);
+            var method = args[0];
+            if (method.startsWith("__FAPI__")) method = method.substr("__FAPI__".length);
+            eventCallback(method, args[1], args[2])
+        }
+    }
+
+    /**
+     * @param {CB_eventCallback} [callback]
+     */
+    function registerCallback(callback) {
+        if (isFunc(callback)) eventCallback = callback;
+    }
+
     // ---------------------------------------------------------------------------------------------------
     exports.init = init;
+    exports.registerCallback = registerCallback;
 
     exports.REST = {
         call: restCall,
@@ -833,7 +890,11 @@
         prepareMidroll: prepareMidroll,
         showMidroll: showMidroll,
         destroy: removeAdsWidget,
-        State: ads_state
+        State: ads_state,
+        isNativeAdSupported: isNativeAdSupported,
+        requestNativeAd: requestNativeAd,
+        requestManualAd: requestManualAd,
+        showLoadedAd: showLoadedAd
     };
 
     exports.Util = {
