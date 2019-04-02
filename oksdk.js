@@ -259,6 +259,7 @@
      * @param {Number} productPrice     product's price to be displayed in a payment window
      * @param {String} productCode      product's code used for validation in a server callback and displayed in transaction info
      * @param {Object} options          additional payment parameters
+     * @returns {Window} opened window or null
      */
     function paymentShow(productName, productPrice, productCode, options) {
         return window.open(getPaymentQuery(productName, productPrice, productCode, options));
@@ -517,6 +518,7 @@
      * @param {String} returnUrl callback url (if null, result will be posted via postmessage and popup closed)
      * @param {Object} options options
      * @param {Object} options.attachment mediatopic (feed) to be posted
+     * @returns false if widget opening failed (like blocked popup)
      */
     function widgetMediatopicPost(returnUrl, options) {
         options = options || {};
@@ -524,7 +526,7 @@
             options = {attachment: options}
         }
         options.attachment = btoa(unescape(encodeURIComponent(toString(options.attachment))));
-        widgetOpen('WidgetMediatopicPost', options, returnUrl);
+        return widgetOpen('WidgetMediatopicPost', options, returnUrl);
     }
 
     /**
@@ -546,9 +548,10 @@
      * @param {String} [options.custom_args] custom args to be passed when app opened from suggestion
      * @param {String} [options.state] custom args to be passed to return url
      * @param {String} [options.target] comma-separated friend IDs that should be preselected by default
+     * @returns false if widget opening failed (like blocked popup)
      */
     function widgetSuggest(returnUrl, options) {
-        widgetOpen('WidgetSuggest', options, returnUrl);
+        return widgetOpen('WidgetSuggest', options, returnUrl);
     }
 
     function widgetOpen(widget, args, returnUrl) {
@@ -581,7 +584,8 @@
         if (state.sessionKey) {
             query += '&st.session_key=' + state.sessionKey;
         }
-        window.open(query);
+        var wnd = window.open(query);
+        return wnd !== null
     }
 
     // ---------------------------------------------------------------------------------------------------
