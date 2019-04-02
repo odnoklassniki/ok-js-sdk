@@ -115,10 +115,10 @@
         return fallback;
     }
 
-    function invokeUIMethod(...args) {
+    function invokeUIMethod() {
         var argStr = "";
-        for (var i = 0; i < args.length; i++) {
-            var arg = args[i];
+        for (var i = 0; i < arguments.length; i++) {
+            var arg = arguments[i];
             if (i > 0) argStr += '$';
             if (arg != null) argStr += encodeURIComponent(String(arg));
         }
