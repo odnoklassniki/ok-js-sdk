@@ -110,9 +110,16 @@
     function getRemoteUrl(sources, fallback) {
         for (var i = 0; i < sources.length; i++) {
             var source = sources[i];
-            if (source && (source.startsWith("http://") || source.startsWith("https://"))) return source;
+            if (source && (source.startsWith("http://") || source.startsWith("https://"))) return getBaseUrl(source);
         }
         return fallback;
+    }
+
+    function getBaseUrl(stringUrl) {
+        // URL() not supported for Android < 4.4
+        var url = document.createElement('a');
+        url.setAttribute('href', stringUrl);
+        return url.protocol + "//" + url.hostname + "/"
     }
 
     function invokeUIMethod() {
