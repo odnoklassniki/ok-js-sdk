@@ -535,7 +535,7 @@
      * @see widgetSuggest widgetSuggest() for more details on arguments
      */
     function widgetInvite(returnUrl, options) {
-        widgetOpen('WidgetInvite', options, returnUrl);
+        return widgetOpen('WidgetInvite', options, returnUrl);
     }
 
     /**
