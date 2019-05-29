@@ -11,6 +11,20 @@
 
     var OK_ANDROID_APP_UA = 'OkApp';
 
+	var MOBILE = 'mobile';
+	var WEB = 'web';
+	var NATIVE_APP = 'application';
+	var EXTERNAL = 'external';
+
+	var PLATFORM_REGISTER = {
+		'w': WEB,
+		'm': MOBILE,
+		'n': NATIVE_APP,
+		'e': EXTERNAL
+	};
+
+	var APP_EXTLINK_REGEXP = /\bjs-sdk-extlink\b/;
+
     var state = {
         app_id: 0, app_key: '',
         sessionKey: '', accessToken: '', sessionSecretKey: '', apiServer: '', widgetServer: '', mobServer: '',
@@ -38,6 +52,8 @@
     var sdk_success = nop;
     var sdk_failure = nop;
     var eventCallback = nop;
+    var extLinkListenerOn = false;
+    var externalLinkHandler = nop;
 
     // ---------------------------------------------------------------------------------------------------
     // General
@@ -63,13 +79,26 @@
         sdk_success = isFunc(success) ? success : nop;
         sdk_failure = isFunc(failure) ? failure : nop;
 
+        if (args.use_extlinks) {
+            OKSDK.Util.addExternalLinksListener(args.use_extlinks.customClass, args.use_extlinks.decorator);
+        } else if (extLinkListenerOn) {
+            OKSDK.Util.removeExternalLinksListener();
+        }
+
         var params = getRequestParameters(args['location_search'] || window.location.search);
         var hParams = getRequestParameters(args['location_hash'] || window.location.hash);
 
         state.app_id = args.app_id;
         state.app_key = params["application_key"] || args.app_key;
+
+        if (!state.app_id || !state.app_key) {
+            sdk_failure('Required arguments app_id/app_key not passed');
+            return;
+        }
+
         state.sessionKey = params["session_key"];
         state.accessToken = hParams['access_token'];
+        state.groupId = params['group_id'] || hParams['group_id'] || args['group_id'];
         state.sessionSecretKey = params["session_secret_key"] || hParams['session_secret_key'];
         state.apiServer = args["api_server"] || params["api_server"] || OK_API_SERVER;
         state.widgetServer = encodeURI(getRemoteUrl([args["widget_server"], params['widget_server']], OK_CONNECT_URL));
@@ -77,16 +106,17 @@
         state.baseUrl = state.apiServer + "fb.do";
         state.header_widget = params['header_widget'];
         state.container = params['container'];
-
-        if (!state.app_id || !state.app_key) {
-            sdk_failure('Required arguments app_id/app_key not passed');
-            return;
-        }
+        state.layout = (params['layout'] || hParams['layout'] || args.layout)
+            || params['api_server']
+                ? params['mob'] && params['mob'] === 'true'
+                    ? 'm'
+                    : 'w'
+                : 'w';
 
         if (!params['api_server']) {
             if ((hParams['access_token'] == null) && (hParams['error'] == null)) {
                 window.location = state.widgetServer + 'oauth/authorize' +
-                    '?client_id=' + args['app_id'] +
+                    '?client_id=' + args.app_id +
                     '&scope=' + (args.oauth.scope || 'VALUABLE_ACCESS') +
                     '&response_type=' + 'token' +
                     '&redirect_uri=' + (args.oauth.url || window.location.href) +
@@ -228,7 +258,9 @@
     function calcSignature(query, secretKey) {
         var i, keys = [];
         for (i in query) {
-            if (query.hasOwnProperty(i)) keys.push(i.toString());
+            if (query.hasOwnProperty(i)) {
+            	keys.push(i.toString());
+			}
         }
         keys.sort();
         var sign = "";
@@ -525,15 +557,22 @@
      * @param {String} returnUrl callback url (if null, result will be posted via postmessage and popup closed)
      * @param {Object} options options
      * @param {Object} options.attachment mediatopic (feed) to be posted
+     * @param {boolean} forcePopup  use WidgetBuilder or make direct popup call
      * @returns false if widget opening failed (like blocked popup)
      */
-    function widgetMediatopicPost(returnUrl, options) {
+    function widgetMediatopicPost(returnUrl, options, forcePopup) {
         options = options || {};
         if (!options.attachment) {
             options = {attachment: options}
         }
-        options.attachment = btoa(unescape(encodeURIComponent(toString(options.attachment))));
-        return widgetOpen('WidgetMediatopicPost', options, returnUrl);
+
+        if (forcePopup) {
+			options.attachment = btoa(unescape(encodeURIComponent(toString(options.attachment))));
+			return widgetOpen('WidgetMediatopicPost', options, returnUrl);
+        } else {
+            var mergedOptions = OKSDK.Util.mergeObject(options, {return: returnUrl}, false);
+            OKSDK.Widgets.builds.post.configure(mergedOptions).run();
+        }
     }
 
     /**
@@ -541,15 +580,25 @@
      *
      * @see widgetSuggest widgetSuggest() for more details on arguments
      */
-    function widgetInvite(returnUrl, options) {
-        return widgetOpen('WidgetInvite', options, returnUrl);
-    }
+	function widgetInvite(returnUrl, options, forcePopup) {
+		if (forcePopup) {
+			return widgetOpen('WidgetInvite', options, returnUrl);
+		} else {
+			OKSDK.Widgets.builds.invite.configure(
+				OKSDK.Util.mergeObject(
+					options,
+					{return: returnUrl}
+				)
+			).run();
+		}
+	}
 
     /**
      * Opens app suggest widget (suggest app to friends, both already playing and not yet)
      *
      * @param {String} returnUrl callback url (if null, result will be posted via postmessage and popup closed)
      * @param {Object} [options] options
+     * @param {boolean} forcePopup  fallback for old method to open widget
      * @param {int} [options.autosel] amount of friends to be preselected
      * @param {String} [options.comment] default text set in the suggestion text field
      * @param {String} [options.custom_args] custom args to be passed when app opened from suggestion
@@ -557,16 +606,108 @@
      * @param {String} [options.target] comma-separated friend IDs that should be preselected by default
      * @returns false if widget opening failed (like blocked popup)
      */
-    function widgetSuggest(returnUrl, options) {
-        return widgetOpen('WidgetSuggest', options, returnUrl);
+    function widgetSuggest(returnUrl, options, forcePopup) {
+        if (forcePopup) {
+            return widgetOpen('WidgetSuggest', options, returnUrl);
+        } else {
+            OKSDK.Widgets.builds.suggest.configure(
+                OKSDK.Util.mergeObject(
+                    options,
+                    { return: returnUrl }
+                )
+            ).run();
+        }
     }
+
+    function widgetGroupAppPermissions(scope, returnUrl, options) {
+        options = options || {};
+        options.groupId = options.groupId || state.groupId;
+        scope = getInnerType(scope) == getInnerType._array ? scope.join(';') : scope;
+
+        OKSDK.Widgets.builds.askGroupAppPermissions
+            .configure(
+                OKSDK.Util.mergeObject(
+                    options,
+                    /* this will be translated in request query as params */
+                    {
+                        scope: scope,
+                        redirect_uri: returnUrl,
+                        response_type: 'token',
+                        popupConfig: { width: 600, height: 300 }
+                    },
+                    false
+                )
+            )
+            .run();
+    }
+
+    function widgetUserContacts(returnUrl, data, options) {
+        options = options || {};
+        if (data) {
+            options.data = JSON.stringify(data);
+        }
+        var lines = data && data.data ? data.data.length : 0;
+        OKSDK.Widgets.builds.userContacts
+            .configure(
+                OKSDK.Util.mergeObject(
+                    options,
+                    /* this will be translated in request query as params */
+                    {
+                        redirect_uri: returnUrl,
+                        response_type: 'token',
+                        popupConfig: { width: 600, height: 360 + lines * 32 }
+                    },
+                    false
+                )
+            )
+            .run();
+	}
 
     function widgetOpen(widget, args, returnUrl) {
         args = args || {};
-        if (returnUrl !== null) {
-            args.return = returnUrl;
+        args.return = returnUrl || args.return || args.redirect_uri;
+        var popupConfig = args.popupConfig;
+        var popup = false;
+
+        if (popupConfig) {
+            delete args.popupConfig;
+            var w = popupConfig.width;
+            var h = popupConfig.height;
+            var documentElement = document.documentElement;
+            if (typeof popupConfig.left == 'undefined') {
+                var screenLeft = window.screenLeft;
+                var innerWidth = window.innerWidth;
+                var screenOffsetLeft = typeof screenLeft == 'undefined' ? screen.left : screenLeft;
+                var screenWidth = innerWidth ? innerWidth : documentElement.clientWidth ? documentElement.clientWidth : screen.width;
+                var left = (screenWidth / 2 - w / 2) + screenOffsetLeft;
+            }
+            if (typeof popupConfig.top == 'undefined') {
+                var screenTop = window.screenTop;
+                var screenOffsetTop = typeof screenTop == 'undefined'? screen.top : screenTop;
+                var innerHeight = window.innerHeight;
+                var screenHeight = innerHeight ? innerHeight : documentElement.clientHeight ? documentElement.clientHeight : screen.height;
+                var top = (screenHeight / 2 - h / 2) + screenOffsetTop;
+            }
+
+
+            popup = window.open(
+                getLinkOnWidget(widget, args),
+                '',
+                'width=' + w + ',' +
+                'height=' + h + ',' +
+                'top=' + top + ',' +
+                'left=' + left +
+                (popupConfig.options ? (',' + popupConfig.options) : '')
+            );
+
+        } else {
+            popup = window.open(getLinkOnWidget(widget, args));
         }
 
+        return popup;
+    }
+
+    function getLinkOnWidget(widget, args) {
         var keys = [];
         for (var arg in args) {
             keys.push(arg.toString());
@@ -591,9 +732,264 @@
         if (state.sessionKey) {
             query += '&st.session_key=' + state.sessionKey;
         }
-        var wnd = window.open(query);
-        return wnd !== null
+        return query;
     }
+
+    // ---------------------------------------------------------------------------------------------------
+    // SDK constructor
+    // ---------------------------------------------------------------------------------------------------
+
+
+    /**
+     * @param {String} widgetName
+     * @constructor
+     */
+    function WidgetConfigurator(widgetName) {
+        this.name = widgetName;
+        this.configAdapter = nop;
+        this.adapters = {};
+    }
+
+    WidgetConfigurator.prototype = {
+        /* one of FAPI.UI methods, more: https://apiok.ru/search?q=FAPI.UI */
+        withUiLayerName: function(name) {
+            this.uiLayerName = name;
+            return this;
+        },
+        withValidators: function (validators) {
+            this.validators = validators;
+            return this;
+        },
+        withConfigAdapter: function (adapterFn) {
+            this.configAdapter = adapterFn;
+            return this;
+        },
+        withAdapters: function (adapters) {
+            this.adapters = adapters;
+            return this;
+        },
+
+        /**
+         * @callback adapterCallback
+         * @param {Object} data
+         * @param {Object} options
+         * @returns {Array}
+         */
+        /**
+         * @param {adapterCallback} fn
+         * @returns {WidgetConfigurator}
+         */
+        withUiAdapter: function(fn) {
+            this.adapters.openUiLayer = fn;
+            return this;
+        },
+        /**
+         * @param {adapterCallback} fn
+         * @returns {WidgetConfigurator}
+         */
+        withPopupAdapter: function(fn) {
+            this.adapters.openPopup = fn;
+            return this;
+        },
+        /**
+         * @param {adapterCallback} fn
+         * @returns {WidgetConfigurator}
+         */
+        withIframeAdapter: function(fn) {
+            this.adapters.openIframeLayer = fn;
+            return this;
+        }
+    };
+
+    /**
+     *
+     * @param {WidgetConfigurator | String} widget
+     * @param {Object} [options]
+     * @constructor
+     */
+    function WidgetLayerBuilder(widget, options) {
+        if (widget instanceof WidgetConfigurator === false) {
+            widget = new WidgetConfigurator(widget);
+        }
+
+        this.widgetConf = widget;
+        this.options = options || {};
+        this.configAdapter = this.widgetConf.configAdapter;
+        this.adapters = this._createMethodSuppliers(this.widgetConf.adapters);
+        this.validators = this._createMethodSuppliers(this.widgetConf.validators);
+        this._callContext = resolveContext();
+    }
+
+    WidgetLayerBuilder.prototype = {
+        /**
+         * @private
+         */
+        _callContext: {},
+        /**
+         * @private
+         * @description resolve when method is allowed to use relate to application envinronment context
+         */
+        _validatorRegister: {
+            openUiLayer: function () {
+                var context = this._callContext;
+                return this.widgetConf.uiLayerName && !(context.isExternal || context.isMob);
+            },
+            openIframeLayer: function () {
+                return false;
+            },
+            openPopup: function () {
+                return true;
+            }
+        },
+
+        /**
+         * @private
+         *
+         * @param {Object} methodMap    see: WidgetLayerBuilder.widgetInterface
+         * @param {Function} methodMap.openPopup
+         * @param {Function} methodMap.openUiLayer
+         * @param {Function} methodMap.openIframeLayer
+         */
+        _createMethodSuppliers: function (methodMap) {
+            var result = {};
+            if (methodMap) {
+                var widgetInterface = this.widgetInterface;
+                for (var i = 0, l = widgetInterface.length; i < l; i++) {
+                    var m = widgetInterface[i];
+                    if (methodMap.hasOwnProperty(m)) {
+                        result[m] = methodMap[m];
+                    }
+                }
+            }
+
+            return result;
+        },
+        widgetInterface:
+            [
+                'openPopup',
+                'openUiLayer',
+                'openIframeLayer'
+            ],
+        openPopup: function () {
+            return widgetOpen(this.widgetConf.name, this.adaptedOptions || this.options);
+        },
+        openUiLayer: function () {
+            return invokeUIMethod.apply(null, this.adaptedOptions || this.options);
+        },
+        openIframeLayer: function () {
+            // 'iframe-layer feature is under development'
+        },
+        run: function () {
+            var clientId = this.options.client_id;
+            if (typeof clientId == 'undefined'
+                || (getInnerType(clientId) == getInnerType._string && clientId.length < 1)) {
+
+                this.options.client_id = state.app_id;
+            }
+            // TODO: make state update to be optional;
+            this._callContext = resolveContext();
+            this.configAdapter(state);
+
+            var validatorRegister = this._validatorRegister;
+            for (var method in validatorRegister) {
+                var result = validatorRegister[method].call(this);
+                if (this.validators[method]) {
+                    result = this.validators[method].call(this);
+                }
+
+                // убеждаемся, что такой метод есть в прототипе конструтора
+                if (result && (!this.hasOwnProperty(method) && method in this)) {
+                    var adapter = this.adapters[method];
+                    if (adapter) {
+                        this.adaptedOptions = adapter(this.widgetConf, this.options);
+                    }
+                    return this[method]();
+                }
+            }
+        },
+        changeParams: function (options) {
+            if (this.options) {
+                mergeObject(this.options, options, true);
+                return this;
+            } else {
+                return this.configure(options);
+            }
+        },
+        addParams: function (options) {
+            if (this.options) {
+                mergeObject(this.options, options, false);
+                return this;
+            } else {
+                return this.configure(options);
+            }
+        },
+        configure: function (options) {
+            this.options = options;
+            return this;
+        }
+    };
+
+    /* todo: виджеты в леере
+    function createIframe(uri, customCssClass) {
+        var iframe = document.createElement('iframe');
+        var iframeClassName = typeof customCssClass === 'undefined' ? "" : customCssClass;
+        iframe.src = uri;
+        iframe.className = ("ok-sdk-frame " + iframeClassName);
+
+        document.body.appendChild(iframe);
+
+        //iframe.contentWindow.postMessage({'test-message': 7}, "*")
+    }
+    */
+
+    function invokeUIMethod() {
+        var argStr = "";
+        for (var i = 0, l = arguments.length; i < l; i++) {
+            var arg = arguments[i];
+
+            if (i > 0) {
+                argStr += '$';
+            }
+            if (arg != null) {
+                argStr += encodeURIComponent(String(arg));
+            }
+        }
+        window.parent.postMessage("__FAPI__" + argStr, "*");
+    }
+
+    /**
+     * @class WidgetLayerBuilder
+     *
+     * @returns {Boolean} context.platform
+     * @returns {Boolean} context.isOKApp
+     * @returns {Boolean} context.isOauth
+     * @returns {Boolean} context.isIframe
+     * @returns {Boolean} context.isPopup
+     * @returns {Boolean} context.isExternal
+     * @returns {Object} context
+     */
+    function resolveContext() {
+        var stateMode = state.layout && state.layout.toLowerCase();
+        var userAgent = navigator.userAgent.toLowerCase();
+        var IOS_UA_REG = /(iphone|ipad|ipod)/g;
+        var ANDROID_UA_REG = /android/g;
+        var WP_UA_REG = /windows phone/g;
+        var context = {
+            layout: PLATFORM_REGISTER[stateMode],
+            isOKApp: Boolean(state.container),
+            isOAuth: stateMode === 'o',
+            isIframe: window.parent && window.parent !== window,
+            isPopup: window.opener && window.opener !== window,
+            isAndroid: ANDROID_UA_REG.test(userAgent),
+            isIOS: IOS_UA_REG.test(userAgent),
+            isWP: WP_UA_REG.test(userAgent)
+        };
+        context.isExternal = context.layout == EXTERNAL || !(context.isIframe || context.isPopup || context.isOAuth);
+        context.isMob = context.layout === MOBILE || context.layout === NATIVE_APP;
+
+        return state.context = context;
+    }
+
 
     // ---------------------------------------------------------------------------------------------------
     // Utils
@@ -764,12 +1160,94 @@
         return rhex(a) + rhex(b) + rhex(c) + rhex(d);
     }
 
+    /**
+     *
+     * @param receiver {Object}    obj where copy to
+     * @param donor {Object}    obj where copied from
+     * @param [rewrite=true] {boolean}
+     * @returns {*}
+     */
+    function mergeObject(receiver, donor, rewrite) {
+        if (getInnerType(donor) == getInnerType._object && getInnerType(receiver) == getInnerType._object) {
+            for (var k in donor) {
+                if (donor.hasOwnProperty(k)) {
+                    if (receiver.hasOwnProperty(k) && typeof rewrite !== 'undefined' && !rewrite) {
+                        continue;
+                    }
+                    var property = donor[k];
+                    if (getInnerType(property) == getInnerType._object) {
+                        mergeObject(receiver[k] = receiver[k] || {}, property, rewrite);
+                    } else {
+                        receiver[k] = property;
+                    }
+                }
+            }
+
+            return receiver;
+        }
+
+        return new Error('Both merged elements should be instances of an Object type');
+    }
+
+    function processExternalLink(e) {
+        var target = e.target;
+        var href;
+        var tries = 5;
+
+        var isValidTarget = isHandledExtlink(target);
+
+        while (!isValidTarget && target && tries) {
+            isValidTarget = isHandledExtlink(target = target.parentNode);
+            tries--;
+        }
+
+        if (isValidTarget) {
+            if (state.context || resolveContext()) {
+                if (state.context.isOKApp) {
+                    target.removeAttribute('target');
+                } else if (state.context.isIframe) {
+                    target.setAttribute('target', '_blank');
+                }
+            }
+
+            href = target.href;
+            if (href) {
+                target.href = createAppExternalLink(href);
+            }
+        }
+
+    }
+
+    function isHandledExtlink(target) {
+        return target
+            && (target.tagName && target.tagName.toLowerCase() === 'a')
+            && (target.className && target.className.match(APP_EXTLINK_REGEXP));
+    }
+
+    function createAppExternalLink(href) {
+        if (state.context.isOKApp) {
+            return (state.context.isIOS ? 'apphook:applink:' : 'https://ok.ru/apphook/outlink?url=') + href;
+        }
+
+        return href;
+    }
+
+    function getInnerType(o) {
+        return Object.prototype.toString.call(o);
+    }
+
+    getInnerType._object = getInnerType({}); // [object Object]
+    getInnerType._function = getInnerType(nop); // [object Function]
+    getInnerType._array = getInnerType([]); // [object Array]
+    getInnerType._string = getInnerType(''); // [object String]
+    getInnerType._number = getInnerType(1); // [object Number]
+
     function isFunc(obj) {
-        return Object.prototype.toString.call(obj) === "[object Function]";
+        return getInnerType(obj) === getInnerType._function;
     }
 
     function isString(obj) {
-        return Object.prototype.toString.call(obj) === "[object String]";
+        return Object.prototype.toString.call(obj) === getInnerType._string;
     }
 
     function toString(obj) {
@@ -793,7 +1271,7 @@
                 var nameValue = nameValues[i].split("=");
                 var name = nameValue[0];
                 var value = nameValue[1];
-                value = decodeURIComponent(value.replace(/\+/g, " "));
+                value = value && decodeURIComponent(value.replace(/\+/g, " "));
                 res[name] = value;
             }
         }
@@ -864,6 +1342,59 @@
     }
 
     // ---------------------------------------------------------------------------------------------------
+
+
+	// ---------------------------------------------------------------------------------------------------
+	// Widget configurations
+	// ---------------------------------------------------------------------------------------------------
+
+	var widgetConfigs = {
+		groupPermission: new WidgetConfigurator('WidgetGroupAppPermissions')
+			.withUiLayerName('showGroupPermissions')
+			.withUiAdapter(function (data, options) {
+				return [
+					data.uiLayerName,
+					options.scope,
+					options.groupId
+				];
+			})
+			.withConfigAdapter(function (state) {
+				if (typeof this.options.groupId == 'undefined') {
+					this.options.groupId = state.groupId;
+				}
+			}),
+		userContacts: new WidgetConfigurator('WidgetUserContacts')
+			.withUiAdapter(function (data, options) {
+				return [
+					data.uiLayerName,
+					options.scope
+				];
+			}),
+		post: new WidgetConfigurator('WidgetMediatopicPost')
+			.withUiLayerName('postMediatopic')
+			.withUiAdapter(function (data, options) {
+				return [
+					data.uiLayerName,
+					JSON.stringify(options.attachment),
+					options.status ? 'on' : 'off',
+					options.platforms ? options.platforms.join(',') : '',
+					options.groupId
+				];
+			})
+			.withPopupAdapter(function (data, options) {
+				options.attachment = btoa(unescape(encodeURIComponent(toString(options.attachment))));
+				return options;
+			}),
+		invite: new WidgetConfigurator('WidgetInvite')
+			.withUiLayerName('showInvite')
+			.withUiAdapter(function (data, options) {
+				return [data.uiLayerName, options.text, options.params, options.uids];
+			})
+	};
+
+	// ---------------------------------------------------------------------------------------------------
+
+
     exports.init = init;
     exports.registerCallback = registerCallback;
 
@@ -883,7 +1414,23 @@
         getBackButtonHtml: nop,
         post: widgetMediatopicPost,
         invite: widgetInvite,
-        suggest: widgetSuggest
+        suggest: widgetSuggest,
+		Builder: WidgetLayerBuilder,
+		WidgetConfigurator: WidgetConfigurator,
+		configs: {
+			groupPermission: widgetConfigs.groupPermission,
+			post: widgetConfigs.post,
+			invite: widgetConfigs.invite
+		},
+		builds: {
+			post: new WidgetLayerBuilder(widgetConfigs.post),
+			invite: new WidgetLayerBuilder(widgetConfigs.invite),
+			suggest: new WidgetLayerBuilder('WidgetSuggest'),
+			askGroupAppPermissions: new WidgetLayerBuilder(widgetConfigs.groupPermission),
+			userContacts: new WidgetLayerBuilder(widgetConfigs.userContacts)
+		},
+		askGroupAppPermissions: widgetGroupAppPermissions,
+		userContacts: widgetUserContacts
     };
 
     exports.Ads = {
@@ -906,6 +1453,35 @@
         decodeBase64: atob,
         getRequestParameters: getRequestParameters,
         toString: toString,
-        isLaunchedFromOKApp: isLaunchedInOKAndroidWebView
+        isLaunchedFromOKApp: isLaunchedInOKAndroidWebView,
+		resolveContext: resolveContext,
+		mergeObject: mergeObject,
+		openAppExternalLink: function (href) {
+			if ((state.context || resolveContext()).isOKApp) {
+				return location.assign(createAppExternalLink(href));
+			}
+			return window.open(createAppExternalLink(href));
+		},
+		addExternalLinksListener: function (appHookClass, eventDecorator) {
+			if (!extLinkListenerOn) {
+				resolveContext();
+
+				if (typeof appHookClass !== 'undefined' && appHookClass.indexOf('.') === -1) {
+					APP_EXTLINK_REGEXP = new RegExp('\\b'+appHookClass+'\\b');
+				}
+
+				externalLinkHandler =  function (e) {
+					var _event = eventDecorator ? eventDecorator(e) : e;
+					processExternalLink(_event);
+				};
+
+				document.body.addEventListener('click', externalLinkHandler, false);
+				extLinkListenerOn = true;
+			}
+		},
+		removeExternalLinksListener: function () {
+			document.body.removeEventListener('click', externalLinkHandler, false);
+			extLinkListenerOn = false;
+		}
     }
 }));
