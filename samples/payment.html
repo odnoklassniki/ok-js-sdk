@@ -1,16 +1,20 @@
 <html>
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
     <title>OKSDK - Payment processing</title>
 
     <script type="text/javascript" src="../oksdk.js"></script>
 </head>
 <body>
 
-<div id="backBtn"></div>
 <div id="content" style="display: none;">
     <p>
         <input type="button" onclick="openPayment();" value="Open payment"/><br/>
+    </p>
+    <p>
+        <input type="button" onclick="openPaymentInFrame();" value="Open payment in frame"/><br/>
     </p>
 </div>
 
@@ -19,6 +23,12 @@
         // Here we initiate payment by opening a new window selling a product
         // named "Zombie leg" for 1 OK, with callback id for the item "zombie-leg-1"
         OKSDK.Payment.show("Zombie Leg", 1, "zombie-leg-1");
+    }
+
+    function openPaymentInFrame() {
+        // Here we initiate payment by opening a new window selling a product
+        // named "Zombie leg" for 1 OK, with callback id for the item "zombie-leg-1"
+        OKSDK.Payment.showInFrame("Zombie Leg", 1, "zombie-leg-1", null, "paymentFrame");
     }
 
     // Start our processing when the page is loaded
@@ -31,10 +41,6 @@
         OKSDK.init(config, function () {
             // Authorization / initialization finished correctly
             // We can start proceeding with OAUTH stuff
-
-            OKSDK.Widgets.getBackButtonHtml(function (html) {
-                document.getElementById('backBtn').innerHTML = html;
-            });
 
             document.getElementById('content').style.display = '';
 
@@ -53,25 +59,58 @@
             //
             let paymentResult = decodeURIComponent(args['custom_args']).split('=');
 
-            // Post a message {type:"payment",result:"..."}
-            window.opener.postMessage(JSON.stringify({
-                type: 'payment',
-                result: paymentResult
-            }), "*");
-            window.close();
-            return;
+            if (window.parent) {
+                    window.parent.postMessage(JSON.stringify({
+                        type: 'payment',
+                        result: paymentResult,
+                        fromAndroid: OKSDK.Util.isLaunchedFromOKApp()
+                    }), "*");
+            }
+
+            if (window.opener) {
+                    // Post a message {type:"payment",result:"..."}
+                    window.opener.postMessage(JSON.stringify({
+                        type: 'payment',
+                        result: paymentResult,
+                        fromAndroid: OKSDK.Util.isLaunchedFromOKApp()
+                    }), "*");
+                    window.close();
+                    return;
+            }
         }
     });
+
+    function processLegacyPayment(event) {
+        return JSON.parse(event.data || "");
+    }
+
+    function processNewPayment(event) {
+       switch (event.data) {
+            case "payment=ok":
+                return {"type": "payment", "result": "ok"};
+            case "payment=cancel":
+                return {"type": "payment", "result": "cancel"};
+            default:
+                return {};
+        }
+    }
 
     // Since we are using separate window when opening a payment, we should send/receive messages
     // to communicate with the opened window
     window.addEventListener('message', function (event) {
-        var data = JSON.parse(event.data || "");
+        OKSDK.Payment.closePaymentFrame("paymentFrame");
 
-        // Receive a message {type:"payment",result:"..."}
-        if (data.type == 'payment') {
-            let paymentResult = data.result;
-            alert('Payment returned result ' + JSON.stringify(paymentResult));
+        var result;
+        try {
+            result = processLegacyPayment(event);
+        } catch (e) {
+            result = processNewPayment(event);
+        }
+
+        if (result.type == 'payment') {
+            let paymentResult = result.result;
+            let fromAndroid = result.fromAndroid || OKSDK.Util.isLaunchedFromOKApp();
+            alert('Payment returned result: ' + JSON.stringify(paymentResult) + '\n' + 'From android: ' + fromAndroid);
         }
     }, false);
 </script>

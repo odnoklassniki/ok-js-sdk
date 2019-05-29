@@ -7,7 +7,6 @@
 </head>
 <body>
 
-<div id="backBtn"></div>
 <div id="content"></div>
 
 <script type="text/javascript">
@@ -18,10 +17,6 @@
         };
 
         OKSDK.init(config, function() {
-
-            OKSDK.Widgets.getBackButtonHtml(function(html) {
-                document.getElementById('backBtn').innerHTML = html;
-            });
 
             OKSDK.REST.call('users.getCurrentUser', null, function(status, data, error) {
                 if (status == 'ok') {
