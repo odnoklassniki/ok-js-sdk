@@ -25,11 +25,11 @@ var OKSDK = (function () {
         container: false,
         header_widget: ''
     };
-    var sdk_success = stub_func;
-    var sdk_failure = stub_func;
+    var sdk_success = nop;
+    var sdk_failure = nop;
     var rest_counter = 0;
     var extLinkListenerOn = false;
-    var externalLinkHandler = stub_func;
+    var externalLinkHandler = nop;
 
     // ---------------------------------------------------------------------------------------------------
     // General
@@ -52,19 +52,13 @@ var OKSDK = (function () {
      */
     function init(args, success, failure) {
         args.oauth = args.oauth || {};
+        sdk_success = isFunc(success) ? success : nop;
+        sdk_failure = isFunc(failure) ? failure : nop;
 
         if (args.use_extlinks) {
             OKSDK.Util.addExternalLinksListener(args.use_extlinks.customClass, args.use_extlinks.decorator);
         } else if (extLinkListenerOn) {
             OKSDK.Util.removeExternalLinksListener();
-        }
-
-        if (isFunc(success)) {
-            sdk_success = success;
-        }
-
-        if (isFunc(failure)) {
-            sdk_failure = failure;
         }
 
         var params = getRequestParameters(args['location_search'] || window.location.search);
@@ -513,7 +507,7 @@ var OKSDK = (function () {
      */
     function WidgetConfigurator(widgetName) {
         this.name = widgetName;
-        this.configAdapter = stub_func;
+        this.configAdapter = nop;
         this.adapters = {};
     }
 
@@ -1004,7 +998,7 @@ var OKSDK = (function () {
     }
 
     getInnerType._object = getInnerType({}); // [object Object]
-    getInnerType._function = getInnerType(stub_func); // [object Function]
+    getInnerType._function = getInnerType(nop); // [object Function]
     getInnerType._array = getInnerType([]); // [object Array]
     getInnerType._string = getInnerType(''); // [object String]
     getInnerType._number = getInnerType(''); // [object Number]
@@ -1054,7 +1048,7 @@ var OKSDK = (function () {
     }
 
     /** stub func */
-    function stub_func() {
+    function nop() {
     }
 
     // ---------------------------------------------------------------------------------------------------
